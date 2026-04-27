@@ -12,6 +12,7 @@ from typing import List, Optional
 
 import httpx
 from openai import AsyncOpenAI
+from PIL import Image
 
 from app.config import settings
 from app.models.schemas import (
@@ -68,6 +69,53 @@ def _get_dalle_size(aspect_ratio: AspectRatio) -> str:
         "2:3":  "1024x1792",
     }
     return mapping.get(aspect_ratio, "1024x1024")
+
+
+def _normalize_openai_inpaint_inputs(
+    original_bytes: bytes,
+    mask_bytes: bytes,
+    target_size: int = 1024,
+) -> tuple[bytes, bytes]:
+    """
+    Prepare inpaint inputs for OpenAI edits endpoint:
+    - original in RGBA
+    - mask in RGBA (white=inpaint, black=keep)
+    - same dimensions
+    - square 1024x1024 PNG
+    """
+    original = Image.open(io.BytesIO(original_bytes)).convert("RGBA")
+    mask = Image.open(io.BytesIO(mask_bytes)).convert("L")
+
+    # Align mask to original dimensions before any further transforms.
+    if mask.size != original.size:
+        mask = mask.resize(original.size, Image.NEAREST)
+
+    orig_w, orig_h = original.size
+    square_side = max(orig_w, orig_h)
+    offset_x = (square_side - orig_w) // 2
+    offset_y = (square_side - orig_h) // 2
+
+    # Pad to square (transparent for image, black for mask/no-edit area).
+    original_square = Image.new("RGBA", (square_side, square_side), (0, 0, 0, 0))
+    original_square.paste(original, (offset_x, offset_y))
+
+    mask_square = Image.new("L", (square_side, square_side), 0)
+    mask_square.paste(mask, (offset_x, offset_y))
+
+    # Normalize size to DALL-E edit target.
+    if square_side != target_size:
+        original_square = original_square.resize((target_size, target_size), Image.LANCZOS)
+        mask_square = mask_square.resize((target_size, target_size), Image.NEAREST)
+
+    mask_rgba = mask_square.convert("RGBA")
+
+    orig_buf = io.BytesIO()
+    original_square.save(orig_buf, format="PNG", optimize=True)
+
+    mask_buf = io.BytesIO()
+    mask_rgba.save(mask_buf, format="PNG", optimize=True)
+
+    return orig_buf.getvalue(), mask_buf.getvalue()
 
 
 # ─── OpenAI DALL-E ────────────────────────────────────────────────────────────
@@ -162,6 +210,11 @@ class OpenAIImageGenerator:
     ) -> dict:
         """Use DALL-E 2 edit endpoint for inpainting."""
         full_prompt = _build_prompt(prompt, style)
+        original_bytes, mask_bytes = _normalize_openai_inpaint_inputs(
+            original_bytes=original_bytes,
+            mask_bytes=mask_bytes,
+            target_size=1024,
+        )
 
         image_file = io.BytesIO(original_bytes)
         image_file.name = "original.png"
