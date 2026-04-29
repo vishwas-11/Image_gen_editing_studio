@@ -41,7 +41,6 @@ class Settings(BaseSettings):
     # ── CORS ─────────────────────────────────────────────────────────────────
     ALLOWED_ORIGINS: str 
     ALLOWED_ORIGIN_REGEX: Optional[str] = None
-    FRONTEND_URL: Optional[str] = None
 
     @property
     def cors_origins(self) -> List[str]:
@@ -50,17 +49,11 @@ class Settings(BaseSettings):
             normalized = origin.strip().rstrip("/")
             if normalized:
                 origins.append(normalized)
-        if self.FRONTEND_URL:
-            normalized = self.FRONTEND_URL.strip().rstrip("/")
-            if normalized and normalized not in origins:
-                origins.append(normalized)
         return origins
 
     @property
     def cors_origin_regex(self) -> Optional[str]:
         if not self.ALLOWED_ORIGIN_REGEX:
-            if self.is_production:
-                return r"^https://([a-zA-Z0-9-]+\.)*vercel\.app$"
             return None
         return self.ALLOWED_ORIGIN_REGEX.strip().rstrip("/")
 

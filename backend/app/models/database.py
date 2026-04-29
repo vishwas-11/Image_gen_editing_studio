@@ -4,13 +4,9 @@ Tables: users, images, prompt_history, collections, image_collections
 """
 from __future__ import annotations
 
-import asyncio
 import uuid
 from datetime import datetime
-from pathlib import Path
 
-from alembic import command
-from alembic.config import Config
 from sqlalchemy import (
     Boolean,
     Column,
@@ -195,21 +191,6 @@ async def create_all_tables() -> None:
     """Create all tables (use only in dev; use Alembic in production)."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-
-
-async def run_database_migrations() -> None:
-    """Apply Alembic migrations to the current database."""
-    backend_dir = Path(__file__).resolve().parents[2]
-    alembic_ini = backend_dir / "alembic.ini"
-    alembic_dir = backend_dir / "alembic"
-
-    def _upgrade() -> None:
-        config = Config(str(alembic_ini))
-        config.set_main_option("script_location", str(alembic_dir))
-        config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
-        command.upgrade(config, "head")
-
-    await asyncio.to_thread(_upgrade)
 
 
 async def verify_database_connection() -> None:
