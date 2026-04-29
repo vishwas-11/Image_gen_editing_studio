@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from app.config import settings
 from app.middleware.logging import LoggingMiddleware, setup_logging
 from app.middleware.rate_limit import RateLimitMiddleware
-from app.models.database import create_all_tables, verify_database_connection
+from app.models.database import create_all_tables, run_database_migrations, verify_database_connection
 from app.routers import auth, collections, download, edit, gallery, generate, prompt, upload
 
 @asynccontextmanager
@@ -24,6 +24,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     try:
         await verify_database_connection()
         log.info("Database connected successfully")
+        await run_database_migrations()
+        log.info("Database migrations applied")
     except RuntimeError as exc:
         log.error(str(exc))
         raise
