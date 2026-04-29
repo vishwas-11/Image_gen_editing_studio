@@ -40,16 +40,22 @@ class Settings(BaseSettings):
 
     # ── CORS ─────────────────────────────────────────────────────────────────
     ALLOWED_ORIGINS: str 
+    ALLOWED_ORIGIN_REGEX: Optional[str] = None
 
     @property
     def cors_origins(self) -> List[str]:
-        
         origins: List[str] = []
         for origin in self.ALLOWED_ORIGINS.split(","):
             normalized = origin.strip().rstrip("/")
             if normalized:
                 origins.append(normalized)
         return origins
+
+    @property
+    def cors_origin_regex(self) -> Optional[str]:
+        if not self.ALLOWED_ORIGIN_REGEX:
+            return None
+        return self.ALLOWED_ORIGIN_REGEX.strip().rstrip("/")
 
     @property
     def is_production(self) -> bool:
