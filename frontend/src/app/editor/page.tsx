@@ -116,6 +116,8 @@ function EditorContent() {
         });
         setResultUrl(res.images[0]?.image_url ?? null);
         store.setSourceImage(res.images[0]?.image_url ?? store.sourceImageUrl);
+        canvasRef.current?.clearMask();
+        setHasMask(false);
         toast.success("Inpainting complete!");
       } catch (err) {
         toast.error(getErrorMessage(err));

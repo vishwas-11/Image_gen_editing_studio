@@ -90,9 +90,10 @@ const FabricCanvas = forwardRef<FabricCanvasHandle, FabricCanvasProps>(
         const clone = fabricClone(obj);
         if (!clone) return;
 
-        // Treat any marked region as a valid mask so users can mark the object they want edited,
-        // even if they used the erase tool to refine the selection.
-        clone.set({ fill: "#ffffff", stroke: "#ffffff" });
+        const maskMode = clone.maskMode || clone.data?.maskMode;
+        // Paint strokes add to the mask, while erase strokes subtract by rendering black.
+        const color = maskMode === "erase" ? "#000000" : "#ffffff";
+        clone.set({ fill: color, stroke: color });
         tempFabric.add(clone);
       });
 
