@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     CLIPDROP_API_KEY: Optional[str] = None
 
     # ── CORS ─────────────────────────────────────────────────────────────────
-    ALLOWED_ORIGINS: str = "http://localhost:3000"
+    ALLOWED_ORIGINS: str 
 
     @property
     def cors_origins(self) -> List[str]:
