@@ -79,7 +79,7 @@ def _normalize_openai_inpaint_inputs(
     """
     Prepare inpaint inputs for OpenAI edits endpoint:
     - original in RGBA
-    - mask in RGBA (white=inpaint, black=keep)
+    - mask encoded with alpha (transparent=inpaint, opaque=keep)
     - same dimensions
     - square 1024x1024 PNG
     """
@@ -107,7 +107,13 @@ def _normalize_openai_inpaint_inputs(
         original_square = original_square.resize((target_size, target_size), Image.LANCZOS)
         mask_square = mask_square.resize((target_size, target_size), Image.NEAREST)
 
-    mask_rgba = mask_square.convert("RGBA")
+    # Hard-threshold after all resizing so anti-aliased edges do not bleed
+    # into nearby pixels. White marks the edit region, so invert to alpha.
+    binary_mask = mask_square.point(lambda p: 255 if p >= 128 else 0, mode="L")
+    mask_alpha = binary_mask.point(lambda p: 255 - p, mode="L")
+    final_size = original_square.size
+    mask_rgba = Image.new("RGBA", final_size, (255, 255, 255, 255))
+    mask_rgba.putalpha(mask_alpha)
 
     orig_buf = io.BytesIO()
     original_square.save(orig_buf, format="PNG", optimize=True)
