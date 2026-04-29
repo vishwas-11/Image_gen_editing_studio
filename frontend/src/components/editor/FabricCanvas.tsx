@@ -142,14 +142,18 @@ const FabricCanvas = forwardRef<FabricCanvasHandle, FabricCanvasProps>(
       onMaskChange?.(getMaskObjects(canvas).length > 0);
     }, [getMaskObjects, onMaskChange]);
 
-    useEffect(() => {
-      let cancelled = false;
-
+    const resetCanvasState = useCallback(() => {
       historyRef.current = [];
       redoStackRef.current = [];
       setCanUndo(false);
       setCanRedo(false);
       onMaskChange?.(false);
+    }, [onMaskChange, setCanRedo, setCanUndo]);
+
+    useEffect(() => {
+      let cancelled = false;
+
+      resetCanvasState();
 
       if (!imageUrl) {
         setZoom(1);
@@ -227,10 +231,11 @@ const FabricCanvas = forwardRef<FabricCanvasHandle, FabricCanvasProps>(
 
       return () => {
         cancelled = true;
+        resetCanvasState();
         fabricRef.current?.dispose();
         fabricRef.current = null;
       };
-    }, [imageUrl, onMaskChange, setCanRedo, setCanUndo, setZoom, syncMaskState, updateBrush]);
+    }, [imageUrl, resetCanvasState, setZoom, syncMaskState, updateBrush]);
 
     useEffect(() => {
       if (fabricRef.current) {
