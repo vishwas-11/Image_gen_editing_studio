@@ -317,22 +317,43 @@ async def style_transfer(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> GenerationResponse:
-    from app.services.image_generator import STYLE_PROMPTS
+    start = time.time()
 
-    style_prompt = STYLE_PROMPTS.get(payload.style, "")
-    combined_prompt = f"{payload.prompt or 'transform this image'}, {style_prompt}".strip(", ")
-
-    return await img_to_img(
-        payload=Img2ImgRequest(
-            source_image_url=payload.source_image_url,
-            prompt=combined_prompt,
+    try:
+        result = await editor.style_transfer(
+            source_url=payload.source_image_url,
             style=payload.style,
+            prompt=payload.prompt,
             strength=payload.strength,
-            aspect_ratio="1:1",
-            quality="standard",
-        ),
-        current_user=current_user,
-        db=db,
+            user_id=current_user.id,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Style transfer failed: {str(e)}")
+
+    img = ImageModel(
+        user_id=current_user.id,
+        image_url=result["url"],
+        thumbnail_url=result.get("thumbnail_url"),
+        cloudinary_public_id=result.get("public_id"),
+        prompt=payload.prompt or f"style transfer ({payload.style})",
+        style=payload.style,
+        operation="style_transfer",
+        aspect_ratio="1:1",
+        quality="standard",
+        width=result.get("width"),
+        height=result.get("height"),
+        file_size=result.get("bytes"),
+        format="png",
+        provider=_provider(),
+    )
+    db.add(img)
+    await db.flush()
+    await db.refresh(img)
+
+    return GenerationResponse(
+        images=[GeneratedImageOut.model_validate(img)],
+        prompt_used=payload.prompt or f"style transfer ({payload.style})",
+        generation_time_seconds=round(time.time() - start, 2),
     )
 
 

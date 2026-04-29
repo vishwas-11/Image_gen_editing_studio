@@ -1,0 +1,14 @@
+Could not clear Next.js build output: EPERM: operation not permitted, unlink 'C:\Projects_Excel\image_gen_editing_studio\frontend\.next\app-build-manifest.json'
+Error: spawn EPERM
+    at ChildProcess.spawn (node:internal/child_process:420:11)
+    at spawn (node:child_process:753:9)
+    at fork (node:child_process:171:10)
+    at C:\Projects_Excel\image_gen_editing_studio\frontend\node_modules\next\dist\cli\next-dev.js:213:45
+    at new Promise (<anonymous>)
+    at startServer (C:\Projects_Excel\image_gen_editing_studio\frontend\node_modules\next\dist\cli\next-dev.js:199:16)
+    at runDevServer (C:\Projects_Excel\image_gen_editing_studio\frontend\node_modules\next\dist\cli\next-dev.js:280:23)
+    at Module.nextDev (C:\Projects_Excel\image_gen_editing_studio\frontend\node_modules\next\dist\cli\next-dev.js:288:11) {
+  errno: -4048,
+  code: 'EPERM',
+  syscall: 'spawn'
+}

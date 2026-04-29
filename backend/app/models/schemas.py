@@ -251,6 +251,13 @@ class RandomPromptResponse(BaseModel):
     suggested_aspect_ratio: AspectRatio
 
 
+class PromptHistoryOut(BaseModel):
+    prompt: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 # ─── Generic responses ────────────────────────────────────────────────────────
 
 class MessageResponse(BaseModel):
