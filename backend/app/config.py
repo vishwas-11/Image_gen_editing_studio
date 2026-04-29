@@ -1,7 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import AnyHttpUrl, field_validator
 from typing import List, Optional
-import os
 
 
 class Settings(BaseSettings):
@@ -45,7 +43,13 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins(self) -> List[str]:
-        return [o.strip() for o in self.ALLOWED_ORIGINS.split(",")]
+        
+        origins: List[str] = []
+        for origin in self.ALLOWED_ORIGINS.split(","):
+            normalized = origin.strip().rstrip("/")
+            if normalized:
+                origins.append(normalized)
+        return origins
 
     @property
     def is_production(self) -> bool:

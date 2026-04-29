@@ -15,6 +15,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     import logging
     log = logging.getLogger("ai_studio")
     log.info("Starting %s [%s]", settings.APP_NAME, settings.APP_ENV)
+    log.info("CORS origins: %s", settings.cors_origins)
     log.info("AI provider: %s", settings.active_ai_provider)
     try:
         log.info("BG removal: %s", settings.bg_removal_provider)
