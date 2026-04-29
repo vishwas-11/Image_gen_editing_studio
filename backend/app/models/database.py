@@ -1,6 +1,6 @@
 """
 SQLAlchemy async ORM models + engine setup.
-Tables: users, images, prompts, collections, image_collections
+Tables: users, images, prompt_history, collections, image_collections
 """
 from __future__ import annotations
 
@@ -78,6 +78,7 @@ class User(Base):
 
     # relationships
     images = relationship("Image", back_populates="user", cascade="all, delete-orphan")
+    prompt_history = relationship("PromptHistory", back_populates="user", cascade="all, delete-orphan")
     collections = relationship("Collection", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
@@ -126,6 +127,20 @@ class Image(Base):
 
     def __repr__(self) -> str:
         return f"<Image id={self.id} operation={self.operation}>"
+
+
+class PromptHistory(Base):
+    __tablename__ = "prompt_history"
+
+    id = Column(UUID(as_uuid=False), primary_key=True, default=_uuid)
+    user_id = Column(UUID(as_uuid=False), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    prompt = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
+
+    user = relationship("User", back_populates="prompt_history")
+
+    def __repr__(self) -> str:
+        return f"<PromptHistory id={self.id} user_id={self.user_id}>"
 
 
 class Collection(Base):

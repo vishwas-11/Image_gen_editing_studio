@@ -1,0 +1,4 @@
+
+> dev
+> node scripts/clean-next.js && next dev
+

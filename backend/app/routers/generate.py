@@ -14,7 +14,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, s
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies import get_current_user
-from app.models.database import Image as ImageModel, User, get_db
+from app.models.database import Image as ImageModel, PromptHistory, User, get_db
 from app.models.schemas import (
     GenerateBatchRequest,
     GenerateRequest,
@@ -73,6 +73,13 @@ def _get_provider_name() -> str:
     return settings.active_ai_provider
 
 
+async def _record_prompt_history(db: AsyncSession, user_id: str, prompt: str | None) -> None:
+    if not prompt or not prompt.strip():
+        return
+
+    db.add(PromptHistory(user_id=user_id, prompt=prompt.strip()))
+
+
 # ─── Routes ───────────────────────────────────────────────────────────────────
 
 @router.post(
@@ -121,6 +128,8 @@ async def generate_images(
             seed=res.get("seed"),
         )
         saved.append(img)
+
+    await _record_prompt_history(db, current_user.id, payload.prompt)
 
     elapsed = round(time.time() - start, 2)
 
@@ -206,6 +215,8 @@ async def generate_variations(
             operation="variation",
         )
         saved.append(img)
+
+    await _record_prompt_history(db, current_user.id, payload.prompt)
 
     return GenerationResponse(
         images=[GeneratedImageOut.model_validate(img) for img in saved],
