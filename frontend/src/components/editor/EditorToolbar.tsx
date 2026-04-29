@@ -33,8 +33,8 @@ export function EditorToolbar({
   const router = useRouter();
 
   return (
-    <div className="flex h-12 flex-shrink-0 items-center gap-2 border-b border-studio-border bg-black px-3">
-      <Button variant="ghost" size="icon-sm" onClick={() => router.push(ROUTES.STUDIO)}>
+    <div className="flex h-12 w-full flex-shrink-0 items-center gap-2 overflow-x-auto border-b border-studio-border bg-black px-3">
+      <Button type="button" variant="ghost" size="icon-sm" onClick={() => router.push(ROUTES.STUDIO)}>
         <ArrowLeft size={14} />
       </Button>
 
@@ -90,6 +90,7 @@ function ToolbarBtn({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       disabled={disabled}
       title={title}

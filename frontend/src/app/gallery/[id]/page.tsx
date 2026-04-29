@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Download, Edit, FolderPlus, Heart, Loader2, Trash2 } from "lucide-react";
+import { ArrowLeft, Download, FolderPlus, Heart, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AuthGuard, PageLoading, EmptyState } from "@/components/shared";
 import { Button } from "@/components/ui/button";
@@ -149,10 +149,6 @@ function GalleryImageContent() {
           <Button variant="outline" size="sm" onClick={handleAddToCollection} className="gap-2">
             <FolderPlus size={13} />
             Add to Collection
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => router.push(`${ROUTES.EDITOR}?id=${image.id}`)} className="gap-2">
-            <Edit size={13} />
-            Edit
           </Button>
           <Button variant="outline" size="sm" onClick={handleDownload} className="gap-2">
             <Download size={13} />

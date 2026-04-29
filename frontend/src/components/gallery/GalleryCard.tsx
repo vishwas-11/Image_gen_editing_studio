@@ -2,7 +2,7 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Download, Edit, FolderPlus, Heart, Loader2, Trash2 } from "lucide-react";
+import { CheckCircle2, Download, Eye, FolderPlus, Heart, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn, downloadBlob, formatRelative, parseTags } from "@/lib/utils";
 import { galleryApi } from "@/lib/api/gallery";
@@ -152,10 +152,10 @@ export function GalleryCard({
               <ActionButton
                 onClick={(e) => {
                   e.stopPropagation();
-                  router.push(`${ROUTES.EDITOR}?id=${image.id}`);
+                  router.push(ROUTES.IMAGE(image.id));
                 }}
               >
-                <Edit size={11} />
+                <Eye size={11} />
               </ActionButton>
               <ActionButton onClick={handleDownload}>
                 <Download size={11} />

@@ -84,8 +84,8 @@ export function BrushSettings() {
 
       <div className="rounded-lg border border-studio-border bg-studio-surface/50 p-3">
         <p className="font-mono text-[10px] leading-relaxed text-studio-subtle">
-          <span className="text-red-400">Red overlay</span> marks the area to regenerate.
-          Use erase mode to clean up mistakes.
+          <span className="text-red-400">Paint</span> the area you want to regenerate.
+          Switch to <span className="text-blue-400">Erase</span> to trim the selection or clean up edges.
         </p>
       </div>
     </div>
