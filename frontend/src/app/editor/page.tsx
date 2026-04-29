@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import dynamic from "next/dynamic";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -10,6 +9,14 @@ import { ArrowRight, Images } from "lucide-react";
 import { AuthGuard, LoadingOverlay, ImageDropzone } from "@/components/shared/index";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { EditorToolbar } from "@/components/editor/EditorToolbar";
 import { BrushSettings } from "@/components/editor/BrushSettings";
 import { InpaintPanel } from "@/components/editor/InpaintPanel";
@@ -20,10 +27,8 @@ import { editApi } from "@/lib/api/edit";
 import { galleryApi, uploadApi } from "@/lib/api/gallery";
 import { getErrorMessage } from "@/lib/api/client";
 import { ROUTES } from "@/lib/constants";
-import type { FabricCanvasHandle } from "@/components/editor/FabricCanvas";
+import FabricCanvas, { FabricCanvasHandle } from "@/components/editor/FabricCanvas";
 import type { StylePreset } from "@/types";
-
-const FabricCanvas = dynamic(() => import("@/components/editor/FabricCanvas"), { ssr: false });
 
 export default function EditorPage() {
   return (
@@ -44,6 +49,7 @@ function EditorContent() {
   const [hasMask, setHasMask] = useState(false);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"inpaint" | "outpaint">("inpaint");
+  const [replaceImageOpen, setReplaceImageOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -94,6 +100,15 @@ function EditorContent() {
     },
     [store],
   );
+
+  const handleReplaceImage = useCallback(() => {
+    canvasRef.current?.clearMask();
+    store.clearSourceImage();
+    setResultUrl(null);
+    setHasMask(false);
+    setReplaceImageOpen(false);
+    toast.success("Current image removed");
+  }, [store]);
 
   const handleInpaint = useCallback(
     async (prompt: string, style: StylePreset) => {
@@ -313,6 +328,7 @@ function EditorContent() {
           canvasRef.current?.clearMask();
           setHasMask(false);
         }}
+        onReplaceImage={() => setReplaceImageOpen(true)}
       />
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
@@ -383,6 +399,25 @@ function EditorContent() {
           </div>
         </aside>
       </div>
+
+      <Dialog open={replaceImageOpen} onOpenChange={setReplaceImageOpen}>
+        <DialogContent className="border-studio-border bg-black text-white sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Replace current image?</DialogTitle>
+            <DialogDescription className="text-studio-subtle">
+              This will remove the image from the editor and clear the current mask and edit preview.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="border-studio-border bg-studio-surface/30">
+            <Button variant="outline" onClick={() => setReplaceImageOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleReplaceImage}>
+              Replace image
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

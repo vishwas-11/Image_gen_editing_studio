@@ -104,6 +104,7 @@ interface EditorStoreState {
   setInpaintPrompt: (p: string) => void;
   toggleOutpaintDir: (dir: "left" | "right" | "top" | "bottom") => void;
   setOutpaintPixels: (n: number) => void;
+  clearSourceImage: () => void;
   reset: () => void;
 }
 
@@ -132,6 +133,18 @@ export const useEditorStore = create<EditorStoreState>()((set, get) => ({
   setInpaintPrompt:  (p)       => set({ inpaintPrompt: p }),
   setOutpaintPixels: (n)       => set({ outpaintPixels: n }),
 
+  clearSourceImage: () =>
+    set({
+      sourceImageUrl: null,
+      sourceImageId: null,
+      maskImageUrl: null,
+      canUndo: false,
+      canRedo: false,
+      inpaintPrompt: "",
+      outpaintDirections: [],
+      zoom: 1,
+    }),
+
   toggleOutpaintDir: (dir) =>
     set((s) => ({
       outpaintDirections: s.outpaintDirections.includes(dir)
@@ -140,8 +153,17 @@ export const useEditorStore = create<EditorStoreState>()((set, get) => ({
     })),
 
   reset: () => set({
-    sourceImageUrl: null, sourceImageId: null, maskImageUrl: null,
-    brushSize: 30, brushTool: "brush", zoom: 1,
-    canUndo: false, canRedo: false, inpaintPrompt: "", outpaintDirections: [],
+    sourceImageUrl: null,
+    sourceImageId: null,
+    maskImageUrl: null,
+    brushSize: 30,
+    brushTool: "brush",
+    softEdge: true,
+    zoom: 1,
+    canUndo: false,
+    canRedo: false,
+    inpaintPrompt: "",
+    outpaintDirections: [],
+    outpaintPixels: 256,
   }),
 }));

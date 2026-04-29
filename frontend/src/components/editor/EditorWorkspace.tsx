@@ -1,11 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ImageOff, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ROUTES } from "@/lib/constants";
 import type { StylePreset } from "@/types";
 import { useEditorStore } from "@/store/galleryStore";
@@ -20,13 +28,23 @@ import { BeforeAfterSlider } from "./BeforeAfterSlider";
 export function EditorWorkspace() {
   const router = useRouter();
   const canvasRef = useRef<FabricCanvasHandle>(null);
-  const { sourceImageUrl, sourceImageId, canUndo, canRedo, zoom } = useEditorStore();
+  const { sourceImageUrl, sourceImageId, canUndo, canRedo, zoom, clearSourceImage } = useEditorStore();
   const [hasMask, setHasMask] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [replaceImageOpen, setReplaceImageOpen] = useState(false);
 
   useEffect(() => {
     setHasMask(false);
   }, [sourceImageUrl]);
+
+  const handleClearSourceImage = useCallback(() => {
+    canvasRef.current?.clearMask();
+    clearSourceImage();
+    setHasMask(false);
+    setIsLoading(false);
+    setReplaceImageOpen(false);
+    toast.success("Current image removed");
+  }, [clearSourceImage]);
 
   const handleInpaint = (prompt: string, style: StylePreset) => {
     if (!sourceImageUrl || !hasMask || !prompt.trim()) {
@@ -99,6 +117,7 @@ export function EditorWorkspace() {
           onZoomOut={() => canvasRef.current?.zoomOut()}
           onFitScreen={() => canvasRef.current?.fitToScreen()}
           onClearMask={() => canvasRef.current?.clearMask()}
+          onReplaceImage={() => setReplaceImageOpen(true)}
         />
 
         <div className="flex flex-1 overflow-hidden p-4">
@@ -143,6 +162,25 @@ export function EditorWorkspace() {
           <OutpaintControls isLoading={isLoading} onOutpaint={handleOutpaint} />
         </div>
       </aside>
+
+      <Dialog open={replaceImageOpen} onOpenChange={setReplaceImageOpen}>
+        <DialogContent className="border-studio-border bg-black text-white sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Replace current image?</DialogTitle>
+            <DialogDescription className="text-studio-subtle">
+              This will remove the image from the editor and clear any active mask or preview.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="border-studio-border bg-studio-surface/30">
+            <Button variant="outline" onClick={() => setReplaceImageOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleClearSourceImage}>
+              Replace image
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

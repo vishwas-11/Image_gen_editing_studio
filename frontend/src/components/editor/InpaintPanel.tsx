@@ -6,6 +6,13 @@ import { Layers, Sparkles, Wand2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Label, Separator, Textarea } from "@/components/ui/index";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useEditorStore } from "@/store/galleryStore";
 import { STYLE_PRESETS } from "@/lib/constants";
 import type { StylePreset } from "@/types";
@@ -105,23 +112,22 @@ export function InpaintPanel({
         <span className="font-mono text-xs uppercase tracking-wider text-studio-subtle">
           Style Transfer
         </span>
-        <select
-          onChange={(e) => e.target.value && onStyleTransfer(e.target.value as StylePreset)}
-          defaultValue=""
-          className={cn(
-            "w-full rounded border border-studio-border bg-studio-surface px-2.5 py-2",
-            "font-mono text-xs text-white focus:outline-none focus:ring-1 focus:ring-studio-blue"
-          )}
-        >
-          <option value="" disabled>
-            Select style to apply...
-          </option>
-          {STYLE_PRESETS.filter((preset) => preset.id !== "none").map((preset) => (
-            <option key={preset.id} value={preset.id}>
-              {preset.label}
-            </option>
-          ))}
-        </select>
+        <Select onValueChange={(value) => onStyleTransfer(value as StylePreset)}>
+          <SelectTrigger className="w-full border-studio-border bg-studio-surface px-3 py-2 font-mono text-xs text-white hover:border-studio-blue/50">
+            <SelectValue placeholder="Select style to apply..." />
+          </SelectTrigger>
+          <SelectContent className="border-studio-border bg-black text-white">
+            {STYLE_PRESETS.filter((preset) => preset.id !== "none").map((preset) => (
+              <SelectItem
+                key={preset.id}
+                value={preset.id}
+                className="font-mono text-xs focus:bg-studio-blue focus:text-white"
+              >
+                {preset.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="rounded-lg border border-studio-border bg-studio-surface/50 p-3">

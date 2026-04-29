@@ -58,6 +58,31 @@ def _build_prompt(prompt: str, style: StylePreset, negative_prompt: Optional[str
     return full_prompt
 
 
+def _build_style_transfer_prompt(style: StylePreset, prompt: Optional[str] = None) -> str:
+    """
+    Build a prompt for image style transfer that preserves the source image content.
+
+    The goal is to restyle the uploaded image without changing composition,
+    subject identity, or objects in the scene.
+    """
+    style_suffix = STYLE_PROMPTS.get(style, "")
+    user_hint = prompt.strip() if prompt else ""
+    base_prompt = (
+        user_hint
+        if user_hint
+        else "Restyle this exact image while preserving the original composition, subject, objects, scene layout, perspective, and meaning."
+    )
+    style_instruction = (
+        f"Apply this visual style: {style_suffix}."
+        if style_suffix
+        else "Apply a coherent artistic style."
+    )
+    return (
+        f"{base_prompt} Do not add, remove, or replace objects. "
+        f"Keep the scene recognizable and preserve the semantic content. {style_instruction}"
+    )
+
+
 def _get_dalle_size(aspect_ratio: AspectRatio) -> str:
     """DALL-E 3 only supports 1024x1024, 1792x1024, 1024x1792."""
     mapping = {
@@ -122,6 +147,28 @@ def _normalize_openai_inpaint_inputs(
     mask_rgba.save(mask_buf, format="PNG", optimize=True)
 
     return orig_buf.getvalue(), mask_buf.getvalue()
+
+
+def _normalize_openai_full_edit_inputs(
+    original_bytes: bytes,
+    target_size: int = 1024,
+) -> tuple[bytes, bytes]:
+    """
+    Prepare inputs for a full-image OpenAI edit.
+
+    We reuse the inpaint normalization path with a full white mask so the
+    edit applies to the entire image while keeping the image itself as the
+    source of truth for composition.
+    """
+    original = Image.open(io.BytesIO(original_bytes)).convert("RGBA")
+    white_mask = Image.new("L", original.size, 255)
+    mask_buf = io.BytesIO()
+    white_mask.save(mask_buf, format="PNG", optimize=True)
+    return _normalize_openai_inpaint_inputs(
+        original_bytes=original_bytes,
+        mask_bytes=mask_buf.getvalue(),
+        target_size=target_size,
+    )
 
 
 # ─── OpenAI DALL-E ────────────────────────────────────────────────────────────
@@ -245,6 +292,48 @@ class OpenAIImageGenerator:
         )
         return result
 
+    async def style_transfer(
+        self,
+        image_bytes: bytes,
+        style: StylePreset = "none",
+        prompt: Optional[str] = None,
+        strength: float = 0.45,
+        user_id: Optional[str] = None,
+    ) -> dict:
+        """
+        Restyle an image while preserving its content using the OpenAI edit endpoint.
+
+        The OpenAI edit flow does not expose a direct strength control, so the
+        parameter is accepted for API compatibility and ignored.
+        """
+        full_prompt = _build_style_transfer_prompt(style, prompt)
+        original_bytes, mask_bytes = _normalize_openai_full_edit_inputs(
+            original_bytes=image_bytes,
+            target_size=1024,
+        )
+
+        image_file = io.BytesIO(original_bytes)
+        image_file.name = "original.png"
+        mask_file = io.BytesIO(mask_bytes)
+        mask_file.name = "mask.png"
+
+        resp = await self.client.images.edit(
+            model="dall-e-2",
+            image=image_file,
+            mask=mask_file,
+            prompt=full_prompt,
+            n=1,
+            size="1024x1024",
+            response_format="url",
+        )
+
+        return await upload_image_from_url(
+            resp.data[0].url,
+            operation="style_transfer",
+            user_id=user_id,
+            format="png",
+        )
+
 
 # ─── Stability AI ─────────────────────────────────────────────────────────────
 
@@ -352,6 +441,26 @@ class StabilityImageGenerator:
             upload = await upload_image_bytes(img_bytes, operation="img2img", user_id=user_id)
             results.append(upload)
         return results
+
+    async def style_transfer(
+        self,
+        image_bytes: bytes,
+        style: StylePreset = "none",
+        prompt: Optional[str] = None,
+        strength: float = 0.45,
+        user_id: Optional[str] = None,
+    ) -> list[dict]:
+        """
+        Restyle the source image using img2img with a preservation-focused prompt.
+        """
+        transfer_prompt = _build_style_transfer_prompt(style, prompt)
+        return await self.img2img(
+            image_bytes=image_bytes,
+            prompt=transfer_prompt,
+            style="none",
+            strength=strength,
+            user_id=user_id,
+        )
 
     async def inpaint(
         self,

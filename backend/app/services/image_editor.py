@@ -248,6 +248,47 @@ async def img2img(
         )
 
 
+async def style_transfer(
+    source_url: str,
+    style: StylePreset = "none",
+    prompt: Optional[str] = None,
+    strength: float = 0.45,
+    user_id: Optional[str] = None,
+) -> dict:
+    """
+    Apply a style to an existing image while preserving its content.
+    """
+    async with httpx.AsyncClient(timeout=30) as client:
+        resp = await client.get(source_url)
+        source_bytes = resp.content
+
+    generator = gen_module.get_generator()
+
+    if hasattr(generator, "style_transfer"):
+        result = await generator.style_transfer(  # type: ignore[attr-defined]
+            image_bytes=source_bytes,
+            style=style,
+            prompt=prompt,
+            strength=strength,
+            user_id=user_id,
+        )
+        if isinstance(result, list):
+            return result[0]
+        return result
+
+    if hasattr(generator, "img2img"):
+        results = await generator.img2img(  # type: ignore[attr-defined]
+            image_bytes=source_bytes,
+            prompt=_build_style_transfer_fallback_prompt(style, prompt),
+            style="none",
+            strength=strength,
+            user_id=user_id,
+        )
+        return results[0]
+
+    return await upload_image_bytes(source_bytes, operation="style_transfer", user_id=user_id)
+
+
 # ─── Inpainting ───────────────────────────────────────────────────────────────
 
 async def inpaint(
@@ -278,3 +319,16 @@ async def inpaint(
 
 # asyncio for gather in inpaint
 import asyncio  # noqa: E402  (moved to bottom to avoid circular issues)
+
+
+def _build_style_transfer_fallback_prompt(style: StylePreset, prompt: Optional[str] = None) -> str:
+    style_name = style.replace("_", " ")
+    base_prompt = prompt.strip() if prompt else ""
+    if not base_prompt:
+        base_prompt = (
+            "Restyle this exact image while preserving the original composition, subject, objects, scene layout, perspective, and meaning."
+        )
+    return (
+        f"{base_prompt} Do not add, remove, or replace objects. "
+        f"Keep the scene recognizable. Apply a {style_name} aesthetic."
+    )

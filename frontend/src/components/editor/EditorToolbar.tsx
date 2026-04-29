@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Maximize, Redo2, Trash2, Undo2, ZoomIn, ZoomOut } from "lucide-react";
+import { ArrowLeft, ImageOff, Maximize, Redo2, Trash2, Undo2, ZoomIn, ZoomOut } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/lib/constants";
@@ -16,6 +16,7 @@ interface EditorToolbarProps {
   onZoomOut: () => void;
   onFitScreen: () => void;
   onClearMask: () => void;
+  onReplaceImage: () => void;
   zoom: number;
 }
 
@@ -28,6 +29,7 @@ export function EditorToolbar({
   onZoomOut,
   onFitScreen,
   onClearMask,
+  onReplaceImage,
   zoom,
 }: EditorToolbarProps) {
   const router = useRouter();
@@ -71,6 +73,18 @@ export function EditorToolbar({
       >
         <Trash2 size={14} />
       </ToolbarBtn>
+
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={onReplaceImage}
+        className="ml-1 gap-2 border-studio-border text-xs"
+        title="Remove current image and choose another"
+      >
+        <ImageOff size={13} />
+        Replace image
+      </Button>
     </div>
   );
 }

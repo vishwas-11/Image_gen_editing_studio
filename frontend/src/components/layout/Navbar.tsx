@@ -155,9 +155,9 @@ import { ROUTES } from "@/lib/constants";
 
 const NAV_LINKS = [
   { href: ROUTES.STUDIO,      label: "Studio",      icon: FolderOpen },
-  { href: ROUTES.EDITOR,      label: "Editor",      icon: Wand2 },
   { href: ROUTES.GALLERY,     label: "Gallery",     icon: Images },
   { href: ROUTES.COLLECTIONS, label: "Collections", icon: FolderOpen },
+  { href: ROUTES.EDITOR,      label: "Editor",      icon: Wand2 },
 ];
 
 // Custom Minimalist Logo Component to replace the Sparkle icon
