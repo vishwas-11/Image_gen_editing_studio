@@ -11,7 +11,6 @@ from sqlalchemy import (
     Boolean,
     Column,
     DateTime,
-    Float,
     ForeignKey,
     Integer,
     String,
@@ -27,8 +26,7 @@ from sqlalchemy.orm import DeclarativeBase, relationship
 
 from app.config import settings
 
-# ─── Engine & session factory ────────────────────────────────────────────────
-
+# Engine and session factory
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=False,
@@ -46,19 +44,13 @@ AsyncSessionLocal = async_sessionmaker(
 )
 
 
-# ─── Base ─────────────────────────────────────────────────────────────────────
-
 class Base(DeclarativeBase):
     pass
 
 
-# ─── Helpers ──────────────────────────────────────────────────────────────────
-
 def _uuid() -> str:
     return str(uuid.uuid4())
 
-
-# ─── Tables ───────────────────────────────────────────────────────────────────
 
 class User(Base):
     __tablename__ = "users"
@@ -76,7 +68,6 @@ class User(Base):
         nullable=False,
     )
 
-    # relationships
     images = relationship("Image", back_populates="user", cascade="all, delete-orphan")
     prompt_history = relationship("PromptHistory", back_populates="user", cascade="all, delete-orphan")
     collections = relationship("Collection", back_populates="user", cascade="all, delete-orphan")
@@ -91,35 +82,30 @@ class Image(Base):
     id = Column(UUID(as_uuid=False), primary_key=True, default=_uuid)
     user_id = Column(UUID(as_uuid=False), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
 
-    # Cloudinary URLs (never local paths)
     image_url = Column(String(1024), nullable=False)
     thumbnail_url = Column(String(1024), nullable=True)
     cloudinary_public_id = Column(String(512), nullable=True)
 
-    # Generation metadata
     prompt = Column(Text, nullable=True)
     negative_prompt = Column(Text, nullable=True)
     style = Column(String(100), nullable=True)
     aspect_ratio = Column(String(20), nullable=True, default="1:1")
     quality = Column(String(20), nullable=True, default="standard")
     seed = Column(String(50), nullable=True)
-    provider = Column(String(50), nullable=True)          # openai | stability
-    operation = Column(String(50), nullable=True)         # generate | inpaint | remove_bg | img2img | outpaint
+    provider = Column(String(50), nullable=True)
+    operation = Column(String(50), nullable=True)
     model_used = Column(String(100), nullable=True)
 
-    # File info
     width = Column(Integer, nullable=True)
     height = Column(Integer, nullable=True)
-    file_size = Column(Integer, nullable=True)           # bytes
-    format = Column(String(10), nullable=True)           # png | jpeg | webp
+    file_size = Column(Integer, nullable=True)
+    format = Column(String(10), nullable=True)
 
-    # User management
     is_favorite = Column(Boolean, default=False, nullable=False)
-    tags = Column(Text, nullable=True)                   # comma-separated
+    tags = Column(Text, nullable=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
-    # relationships
     user = relationship("User", back_populates="images")
     collection_links = relationship(
         "ImageCollection", back_populates="image", cascade="all, delete-orphan"
@@ -157,7 +143,6 @@ class Collection(Base):
         UniqueConstraint("user_id", "name", name="uq_collection_user_name"),
     )
 
-    # relationships
     user = relationship("User", back_populates="collections")
     image_links = relationship(
         "ImageCollection", back_populates="collection", cascade="all, delete-orphan"
@@ -168,7 +153,7 @@ class Collection(Base):
 
 
 class ImageCollection(Base):
-    """Many-to-many: images ↔ collections."""
+    """Many-to-many: images <-> collections."""
     __tablename__ = "image_collections"
 
     id = Column(UUID(as_uuid=False), primary_key=True, default=_uuid)
@@ -180,12 +165,9 @@ class ImageCollection(Base):
         UniqueConstraint("image_id", "collection_id", name="uq_image_collection"),
     )
 
-    # relationships
     image = relationship("Image", back_populates="collection_links")
     collection = relationship("Collection", back_populates="image_links")
 
-
-# ─── DB lifecycle helpers ─────────────────────────────────────────────────────
 
 async def create_all_tables() -> None:
     """Create all tables (use only in dev; use Alembic in production)."""
