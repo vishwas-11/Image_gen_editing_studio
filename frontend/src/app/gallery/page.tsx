@@ -5,7 +5,7 @@ import { Images } from "lucide-react";
 import { AuthGuard, EmptyState, PageLoading } from "@/components/shared/index";
 import { MasonryGrid } from "@/components/gallery/MasonryGrid";
 import { SearchBar, FilterPanel, CollectionsSidebar, MultiSelectBar, AddToCollectionDialog } from "@/components/gallery";
-import { Button } from "@/components/ui/button";
+import { Button, ConfirmDialog } from "@/components/ui";
 import { useGalleryStore } from "@/store/galleryStore";
 import { galleryApi, collectionsApi, downloadApi } from "@/lib/api/gallery";
 import { getErrorMessage } from "@/lib/api/client";
@@ -27,6 +27,7 @@ function GalleryContent() {
   const [page, setPage] = useState(1);
   const [showAddToCollection, setShowAddToCollection] = useState(false);
   const [imageToAddId, setImageToAddId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ type: "single"; id: string } | { type: "bulk" } | null>(null);
 
   const debouncedSearch = useDebounce(searchInput, 400);
 
@@ -78,8 +79,11 @@ function GalleryContent() {
     fetchImages({ page: next });
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this image?")) return;
+  const handleDelete = (id: string) => {
+    setDeleteTarget({ type: "single", id });
+  };
+
+  const performDelete = async (id: string) => {
     try {
       await galleryApi.delete(id);
       store.removeImage(id);
@@ -89,8 +93,11 @@ function GalleryContent() {
     }
   };
 
-  const handleBulkDelete = async () => {
-    if (!confirm(`Delete ${store.selected.size} images?`)) return;
+  const handleBulkDelete = () => {
+    setDeleteTarget({ type: "bulk" });
+  };
+
+  const performBulkDelete = async () => {
     for (const id of store.selected) {
       try { await galleryApi.delete(id); store.removeImage(id); } catch {}
     }
@@ -244,6 +251,29 @@ function GalleryContent() {
         collections={store.collections}
         imageIds={imageToAddId ? [imageToAddId] : []}
         onAdded={fetchCollections}
+      />
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+        title={deleteTarget?.type === "bulk" ? "Delete selected images?" : "Delete image?"}
+        description={
+          deleteTarget?.type === "bulk"
+            ? `This will permanently delete ${store.selected.size} image${store.selected.size === 1 ? "" : "s"}. This action cannot be undone.`
+            : "This will permanently delete the selected image from your gallery. This action cannot be undone."
+        }
+        confirmLabel={deleteTarget?.type === "bulk" ? "Delete images" : "Delete image"}
+        onConfirm={async () => {
+          if (!deleteTarget) return;
+          if (deleteTarget.type === "single") {
+            await performDelete(deleteTarget.id);
+          } else {
+            await performBulkDelete();
+          }
+          setDeleteTarget(null);
+        }}
       />
     </div>
   );

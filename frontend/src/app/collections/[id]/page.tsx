@@ -4,7 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Download, Trash2, Plus, FolderOpen } from "lucide-react";
 import { toast } from "sonner";
 import { AuthGuard, PageLoading, EmptyState } from "@/components/shared/index";
-import { Button } from "@/components/ui/button";
+import { Button, ConfirmDialog } from "@/components/ui";
 import { MasonryGrid } from "@/components/gallery/MasonryGrid";
 import { collectionsApi, galleryApi, downloadApi } from "@/lib/api/gallery";
 import { getErrorMessage } from "@/lib/api/client";
@@ -26,6 +26,7 @@ function CollectionDetailContent() {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading]       = useState(true);
   const [selected, setSelected]     = useState<Set<string>>(new Set());
+  const [deleteTarget, setDeleteTarget] = useState<{ kind: "selected" } | { kind: "single"; id: string } | null>(null);
 
   const fetchCollection = async (p = 1) => {
     setLoading(true);
@@ -49,7 +50,10 @@ function CollectionDetailContent() {
     setSelected((prev) => { const n = new Set(prev); n.has(imgId) ? n.delete(imgId) : n.add(imgId); return n; });
 
   const handleRemoveSelected = async () => {
-    if (!confirm(`Remove ${selected.size} image(s) from this collection?`)) return;
+    setDeleteTarget({ kind: "selected" });
+  };
+
+  const performRemoveSelected = async () => {
     try {
       await collectionsApi.removeImages(id, [...selected]);
       setImages((p) => p.filter((img) => !selected.has(img.id)));
@@ -74,7 +78,10 @@ function CollectionDetailContent() {
   };
 
   const handleDeleteImage = async (imgId: string) => {
-    if (!confirm("Delete image permanently?")) return;
+    setDeleteTarget({ kind: "single", id: imgId });
+  };
+
+  const performDeleteImage = async (imgId: string) => {
     try {
       await galleryApi.delete(imgId);
       setImages((p) => p.filter((i) => i.id !== imgId));
@@ -109,7 +116,7 @@ function CollectionDetailContent() {
               <Trash2 size={12} /> Remove {selected.size}
             </Button>
           )}
-          <Button variant="outline" size="sm" onClick={handleDownloadZip} className="gap-1.5">
+      <Button variant="outline" size="sm" onClick={handleDownloadZip} className="gap-1.5">
             <Download size={13} /> Download ZIP
           </Button>
         </div>
@@ -143,6 +150,29 @@ function CollectionDetailContent() {
           )}
         </>
       )}
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+        title={deleteTarget?.kind === "selected" ? "Remove selected images?" : "Delete image?"}
+        description={
+          deleteTarget?.kind === "selected"
+            ? `This will remove ${selected.size} image${selected.size === 1 ? "" : "s"} from this collection. The images will stay in your gallery.`
+            : "This will permanently delete the image from your gallery. This action cannot be undone."
+        }
+        confirmLabel={deleteTarget?.kind === "selected" ? "Remove images" : "Delete image"}
+        onConfirm={async () => {
+          if (!deleteTarget) return;
+          if (deleteTarget.kind === "selected") {
+            await performRemoveSelected();
+          } else {
+            await performDeleteImage(deleteTarget.id);
+          }
+          setDeleteTarget(null);
+        }}
+      />
     </div>
   );
 }

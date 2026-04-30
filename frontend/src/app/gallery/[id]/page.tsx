@@ -7,7 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Download, FolderPlus, Heart, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AuthGuard, PageLoading, EmptyState } from "@/components/shared";
-import { Button } from "@/components/ui/button";
+import { Button, ConfirmDialog } from "@/components/ui";
 import { AddToCollectionDialog } from "@/components/gallery";
 import { downloadBlob, formatBytes, formatRelative, parseTags } from "@/lib/utils";
 import { galleryApi, collectionsApi } from "@/lib/api/gallery";
@@ -32,6 +32,7 @@ function GalleryImageContent() {
   const [favLoading, setFavLoading] = useState(false);
   const [collections, setCollections] = useState<Collection[]>([]);
   const [showAddToCollection, setShowAddToCollection] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const fetchCollections = useCallback(async () => {
     try {
@@ -95,13 +96,17 @@ function GalleryImageContent() {
     setShowAddToCollection(true);
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!image) return;
-    if (!confirm("Delete this image permanently?")) return;
+    setShowDeleteConfirm(true);
+  };
 
+  const performDelete = async () => {
+    if (!image) return;
     try {
       await galleryApi.delete(image.id);
       toast.success("Image deleted");
+      setShowDeleteConfirm(false);
       router.push(ROUTES.GALLERY);
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -243,6 +248,15 @@ function GalleryImageContent() {
         collections={collections}
         imageIds={image ? [image.id] : []}
         onAdded={fetchCollections}
+      />
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title="Delete image?"
+        description="This will permanently delete the image from your gallery. This action cannot be undone."
+        confirmLabel="Delete image"
+        onConfirm={performDelete}
       />
     </div>
   );
