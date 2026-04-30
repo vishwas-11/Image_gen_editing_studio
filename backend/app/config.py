@@ -69,6 +69,10 @@ class Settings(BaseSettings):
     @property
     def cors_origin_regex(self) -> Optional[str]:
         if not self.ALLOWED_ORIGIN_REGEX:
+            if self.is_production:
+                # Fallback for the deployed Vercel frontend when the production env
+                # does not explicitly define a frontend origin regex.
+                return r"^https://([a-z0-9-]+\.)*vercel\.app$"
             return None
         return self.ALLOWED_ORIGIN_REGEX.strip().rstrip("/")
 
