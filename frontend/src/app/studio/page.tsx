@@ -194,8 +194,8 @@ function StudioContent() {
       </main>
 
       {/* ── Right Sidebar: Parameters ────────────────────────────────────── */}
-      <aside className="studio-scrollbar w-64 flex-shrink-0 border-l border-studio-border bg-black overflow-y-auto">
-        <div className="p-4 flex flex-col gap-6">
+      <aside className="studio-scrollbar w-72 flex-shrink-0 border-l border-studio-border bg-black overflow-y-auto xl:w-80 2xl:w-96">
+        <div className="p-4 flex flex-col gap-6 xl:p-5">
           <div className="flex items-center gap-2">
             <Wand2 size={13} className="text-studio-subtle" />
             <span className="font-mono text-xs text-studio-subtle uppercase tracking-wider">Parameters</span>
