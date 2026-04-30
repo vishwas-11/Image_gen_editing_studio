@@ -139,6 +139,15 @@ STYLE_TO_ASPECT: dict[str, AspectRatio] = {
     "none": "1:1",
 }
 
+BASELINE_PROMPT_SUFFIX = (
+    "simple, minimal, uncluttered, plain background, neutral composition, "
+    "no ornate details, no dramatic lighting, no cinematic effects, no stylization"
+)
+
+
+def _is_baseline_style(style: Optional[StylePreset]) -> bool:
+    return style is None or style == "none"
+
 
 # ─── Service functions ────────────────────────────────────────────────────────
 
@@ -152,14 +161,21 @@ async def enhance_prompt(
     """
     if settings.OPENAI_API_KEY:
         client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
-        style_hint = f" The image should be in {style.replace('_', ' ')} style." if style and style != "none" else ""
+        baseline_mode = _is_baseline_style(style)
+        style_hint = (
+            f" The image should be in {style.replace('_', ' ')} style."
+            if not baseline_mode
+            else f" Keep it simple, minimal, and uncluttered. Use this baseline direction: {BASELINE_PROMPT_SUFFIX}."
+        )
 
         system = (
             "You are an expert AI image generation prompt engineer. "
             "Your task is to enhance a basic prompt into a detailed, "
             "high-quality image generation prompt. "
             "Keep it under 200 words. "
-            "Include: subject details, lighting, atmosphere, camera/perspective, quality tags. "
+            "If no style is requested, keep the prompt simple, minimal, uncluttered, and neutral. "
+            "Do not add artistic style, cinematic language, ornate details, or flashy quality modifiers unless the user explicitly asks for them. "
+            "If a style is requested, include only the requested style direction. "
             "Return ONLY the enhanced prompt, no explanation."
         )
         user_msg = f"Enhance this prompt for AI image generation:{style_hint}\n\n{prompt}"
@@ -176,6 +192,9 @@ async def enhance_prompt(
         return resp.choices[0].message.content.strip()
 
     # Rule-based fallback
+    if _is_baseline_style(style):
+        return f"{prompt.strip()}, {BASELINE_PROMPT_SUFFIX}"
+
     additions = ["highly detailed", "professional quality", "sharp focus", "8k resolution"]
     if style and style != "none":
         style_str = style.replace("_", " ")

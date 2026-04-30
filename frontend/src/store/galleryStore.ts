@@ -1,6 +1,6 @@
 "use client";
 import { create } from "zustand";
-import type { ImageRecord, GalleryFilters, Collection, BrushTool } from "@/types";
+import type { ImageRecord, GalleryFilters, Collection, BrushTool, EditorTool, StylePreset } from "@/types";
 
 // ─── Gallery Store ─────────────────────────────────────────────────────────
 
@@ -85,11 +85,17 @@ interface EditorStoreState {
   maskImageUrl: string | null;
   brushSize: number;
   brushTool: BrushTool;
+  editorTool: EditorTool;
+  brushOpacity: number;
   softEdge: boolean;
   zoom: number;
   canUndo: boolean;
   canRedo: boolean;
   inpaintPrompt: string;
+  img2imgPrompt: string;
+  img2imgNegativePrompt: string;
+  img2imgStrength: number;
+  img2imgStyle: StylePreset;
   outpaintDirections: Array<"left" | "right" | "top" | "bottom">;
   outpaintPixels: number;
 
@@ -97,11 +103,17 @@ interface EditorStoreState {
   setMaskImageUrl: (url: string | null) => void;
   setBrushSize: (n: number) => void;
   setBrushTool: (t: BrushTool) => void;
+  setEditorTool: (t: EditorTool) => void;
+  setBrushOpacity: (n: number) => void;
   setSoftEdge: (v: boolean) => void;
   setZoom: (n: number) => void;
   setCanUndo: (v: boolean) => void;
   setCanRedo: (v: boolean) => void;
   setInpaintPrompt: (p: string) => void;
+  setImg2ImgPrompt: (p: string) => void;
+  setImg2ImgNegativePrompt: (p: string) => void;
+  setImg2ImgStrength: (n: number) => void;
+  setImg2ImgStyle: (style: StylePreset) => void;
   toggleOutpaintDir: (dir: "left" | "right" | "top" | "bottom") => void;
   setOutpaintPixels: (n: number) => void;
   clearSourceImage: () => void;
@@ -114,11 +126,17 @@ export const useEditorStore = create<EditorStoreState>()((set, get) => ({
   maskImageUrl:      null,
   brushSize:         30,
   brushTool:         "brush",
+  editorTool:        "brush",
+  brushOpacity:      0.85,
   softEdge:          true,
   zoom:              1,
   canUndo:           false,
   canRedo:           false,
   inpaintPrompt:     "",
+  img2imgPrompt:     "",
+  img2imgNegativePrompt: "",
+  img2imgStrength:   0.75,
+  img2imgStyle:      "none",
   outpaintDirections:[],
   outpaintPixels:    256,
 
@@ -126,11 +144,17 @@ export const useEditorStore = create<EditorStoreState>()((set, get) => ({
   setMaskImageUrl:   (url)     => set({ maskImageUrl: url }),
   setBrushSize:      (n)       => set({ brushSize: n }),
   setBrushTool:      (t)       => set({ brushTool: t }),
+  setEditorTool:     (t)       => set({ editorTool: t }),
+  setBrushOpacity:   (n)       => set({ brushOpacity: n }),
   setSoftEdge:       (v)       => set({ softEdge: v }),
   setZoom:           (n)       => set({ zoom: n }),
   setCanUndo:        (v)       => set({ canUndo: v }),
   setCanRedo:        (v)       => set({ canRedo: v }),
   setInpaintPrompt:  (p)       => set({ inpaintPrompt: p }),
+  setImg2ImgPrompt:  (p)       => set({ img2imgPrompt: p }),
+  setImg2ImgNegativePrompt: (p) => set({ img2imgNegativePrompt: p }),
+  setImg2ImgStrength:(n)       => set({ img2imgStrength: n }),
+  setImg2ImgStyle:   (style)   => set({ img2imgStyle: style }),
   setOutpaintPixels: (n)       => set({ outpaintPixels: n }),
 
   clearSourceImage: () =>
@@ -141,7 +165,13 @@ export const useEditorStore = create<EditorStoreState>()((set, get) => ({
       canUndo: false,
       canRedo: false,
       inpaintPrompt: "",
+      img2imgPrompt: "",
+      img2imgNegativePrompt: "",
+      img2imgStrength: 0.75,
+      img2imgStyle: "none",
       outpaintDirections: [],
+      editorTool: "brush",
+      brushOpacity: 0.85,
       zoom: 1,
     }),
 
@@ -158,11 +188,17 @@ export const useEditorStore = create<EditorStoreState>()((set, get) => ({
     maskImageUrl: null,
     brushSize: 30,
     brushTool: "brush",
+    editorTool: "brush",
+    brushOpacity: 0.85,
     softEdge: true,
     zoom: 1,
     canUndo: false,
     canRedo: false,
     inpaintPrompt: "",
+    img2imgPrompt: "",
+    img2imgNegativePrompt: "",
+    img2imgStrength: 0.75,
+    img2imgStyle: "none",
     outpaintDirections: [],
     outpaintPixels: 256,
   }),

@@ -12,7 +12,7 @@ export interface PromptHistoryEntry {
 const emptyGenerationState = {
   prompt: "",
   negativePrompt: "",
-  showNegative: false,
+  showNegative: true,
   style: "none" as StylePreset,
   aspectRatio: "1:1" as AspectRatio,
   quality: "standard" as Quality,

@@ -1,6 +1,5 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { formatDistanceToNow, format } from "date-fns";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -16,7 +15,11 @@ export function formatBytes(bytes: number): string {
 
 export function formatDate(dateStr: string): string {
   try {
-    return format(new Date(dateStr), "MMM d, yyyy");
+    return new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }).format(new Date(dateStr));
   } catch {
     return dateStr;
   }
@@ -24,7 +27,32 @@ export function formatDate(dateStr: string): string {
 
 export function formatRelative(dateStr: string): string {
   try {
-    return formatDistanceToNow(new Date(dateStr), { addSuffix: true });
+    const date = new Date(dateStr);
+    const diffMs = date.getTime() - Date.now();
+    const absSeconds = Math.abs(Math.round(diffMs / 1000));
+
+    const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+
+    if (absSeconds < 60) {
+      return rtf.format(diffMs < 0 ? -absSeconds : absSeconds, "second");
+    }
+
+    const absMinutes = Math.abs(Math.round(diffMs / (60 * 1000)));
+    if (absMinutes < 60) {
+      return rtf.format(diffMs < 0 ? -absMinutes : absMinutes, "minute");
+    }
+
+    const absHours = Math.abs(Math.round(diffMs / (60 * 60 * 1000)));
+    if (absHours < 24) {
+      return rtf.format(diffMs < 0 ? -absHours : absHours, "hour");
+    }
+
+    const absDays = Math.abs(Math.round(diffMs / (24 * 60 * 60 * 1000)));
+    if (absDays < 30) {
+      return rtf.format(diffMs < 0 ? -absDays : absDays, "day");
+    }
+
+    return formatDate(dateStr);
   } catch {
     return dateStr;
   }

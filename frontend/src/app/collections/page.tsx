@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { FolderOpen, Plus, Trash2, Images } from "lucide-react";
 import { toast } from "sonner";
 import { AuthGuard, PageLoading, EmptyState } from "@/components/shared/index";
-import { Button } from "@/components/ui/button";
+import { Button, ConfirmDialog } from "@/components/ui";
 import { collectionsApi } from "@/lib/api/gallery";
 import { getErrorMessage } from "@/lib/api/client";
 import { formatDate } from "@/lib/utils";
@@ -21,6 +21,7 @@ function CollectionsContent() {
   const [loading, setLoading]         = useState(true);
   const [creating, setCreating]       = useState(false);
   const [newName, setNewName]         = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     collectionsApi.list()
@@ -41,12 +42,19 @@ function CollectionsContent() {
 
   const handleDelete = async (id: string, name: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm(`Delete "${name}"? Images will not be deleted.`)) return;
+    setDeleteTarget({ id, name });
+  };
+
+  const performDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await collectionsApi.delete(id);
-      setCollections((p) => p.filter((c) => c.id !== id));
+      await collectionsApi.delete(deleteTarget.id);
+      setCollections((p) => p.filter((c) => c.id !== deleteTarget.id));
       toast.success("Collection deleted");
     } catch (err) { toast.error(getErrorMessage(err)); }
+    finally {
+      setDeleteTarget(null);
+    }
   };
 
   return (
@@ -131,6 +139,17 @@ function CollectionsContent() {
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+        title={deleteTarget ? `Delete "${deleteTarget.name}"?` : "Delete collection?"}
+        description="This will permanently delete the collection. Your images will remain in the gallery."
+        confirmLabel="Delete collection"
+        onConfirm={performDelete}
+      />
     </div>
   );
 }
