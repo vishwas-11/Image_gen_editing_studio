@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 revision = "0002_prompt_history"
 down_revision = "0001_initial"
@@ -18,8 +19,8 @@ depends_on = None
 def upgrade() -> None:
     op.create_table(
         "prompt_history",
-        sa.Column("id", sa.String(), nullable=False),
-        sa.Column("user_id", sa.String(), nullable=False),
+        sa.Column("id", postgresql.UUID(as_uuid=False), nullable=False),
+        sa.Column("user_id", postgresql.UUID(as_uuid=False), nullable=False),
         sa.Column("prompt", sa.Text(), nullable=False),
         sa.Column(
             "created_at",
