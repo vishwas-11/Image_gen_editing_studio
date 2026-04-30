@@ -30,7 +30,7 @@ export function GenerationGrid({
 
   if (!isGenerating && images.length === 0) {
     return (
-      <div className="flex h-64 flex-col items-center justify-center rounded-xl border border-dashed border-studio-border bg-studio-surface/30">
+      <div className="flex min-h-[20rem] flex-col items-center justify-center rounded-xl border border-dashed border-studio-border bg-studio-surface/30">
         <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl border border-studio-border bg-studio-surface">
           <Sparkles size={22} className="text-studio-subtle" />
         </div>
@@ -47,7 +47,7 @@ export function GenerationGrid({
   const hasResults = images.length > 0;
 
   return (
-    <div className="relative flex flex-col gap-3">
+    <div className="relative flex min-h-[18rem] flex-col gap-3">
       {generationTime && !isGenerating && (
         <div className="flex items-center gap-2">
           <div className="h-px flex-1 bg-studio-border" />
@@ -109,7 +109,7 @@ export function GenerationGrid({
             ))}
           </div>
         ) : isGenerating ? (
-          <div className="flex h-64 flex-col items-center justify-center rounded-xl border border-studio-border bg-studio-surface/20">
+          <div className="flex min-h-[20rem] flex-col items-center justify-center rounded-xl border border-studio-border bg-studio-surface/20">
             <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl border border-studio-border bg-studio-surface">
               <Loader2 size={22} className="animate-spin text-studio-blue" />
             </div>

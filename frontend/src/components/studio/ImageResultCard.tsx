@@ -71,16 +71,16 @@ export default function ImageResultCard({
 
   return (
     <div
-      className="result-card group relative rounded-lg overflow-hidden cursor-pointer border border-studio-border bg-studio-surface hover:border-studio-blue/40 transition-all duration-200"
+      className="result-card group relative cursor-pointer overflow-hidden rounded-lg border border-studio-border bg-studio-surface transition-all duration-200 hover:border-studio-blue/40"
       onClick={() => router.push(ROUTES.IMAGE(image.id))}
     >
       {/* Image */}
-      <div className="relative w-full" style={{ paddingBottom: paddingPct }}>
+      <div className="relative w-full bg-black/40" style={{ paddingBottom: paddingPct }}>
         <Image
           src={image.thumbnail_url ?? image.image_url}
           alt={image.prompt ?? "Generated image"}
           fill
-          className="object-cover"
+          className="object-contain p-1.5"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           unoptimized
         />

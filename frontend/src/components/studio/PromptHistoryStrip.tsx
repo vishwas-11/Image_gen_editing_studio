@@ -26,7 +26,7 @@ export function PromptHistoryStrip({
           Recent prompts
         </span>
       </div>
-      <div className="grid max-h-40 grid-cols-1 gap-2 overflow-y-auto pr-1 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
         {orderedHistory.slice(0, 12).map((entry, index) => (
           <button
             key={`${entry.createdAt}-${index}-${entry.prompt}`}

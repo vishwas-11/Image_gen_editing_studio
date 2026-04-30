@@ -119,17 +119,17 @@ function StudioContent() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-56px)] overflow-hidden">
+    <div className="flex min-h-[calc(100vh-56px)] items-start overflow-x-hidden overflow-y-auto bg-black">
 
       {/* ── Left Sidebar: Styles ─────────────────────────────────────────── */}
-      <aside className="studio-scrollbar w-72 flex-shrink-0 border-r border-studio-border bg-black overflow-y-auto xl:w-80">
+      <aside className="studio-scrollbar sticky top-0 h-[calc(100vh-56px)] w-72 flex-shrink-0 overflow-y-auto border-r border-studio-border bg-black xl:w-80">
         <div className="p-4">
           <StyleSelector value={store.style} onChange={store.setStyle} />
         </div>
       </aside>
 
       {/* ── Center: Prompt + Results ──────────────────────────────────────── */}
-      <main className="flex-1 flex flex-col overflow-hidden bg-black">
+      <main className="flex min-w-0 flex-1 flex-col bg-black">
 
         {/* Prompt area */}
         <div className="border-b border-studio-border p-5">
@@ -173,7 +173,7 @@ function StudioContent() {
         </div>
 
         {/* Results area */}
-        <div className="studio-scrollbar flex-1 overflow-y-auto p-5 flex flex-col gap-4">
+        <div className="p-5">
           <GenerationGrid
             images={store.results}
             isGenerating={store.isGenerating}
@@ -194,7 +194,7 @@ function StudioContent() {
       </main>
 
       {/* ── Right Sidebar: Parameters ────────────────────────────────────── */}
-      <aside className="studio-scrollbar w-72 flex-shrink-0 border-l border-studio-border bg-black overflow-y-auto xl:w-80 2xl:w-96">
+      <aside className="studio-scrollbar sticky top-0 h-[calc(100vh-56px)] w-72 flex-shrink-0 overflow-y-auto border-l border-studio-border bg-black xl:w-80 2xl:w-96">
         <div className="p-4 flex flex-col gap-6 xl:p-5">
           <div className="flex items-center gap-2">
             <Wand2 size={13} className="text-studio-subtle" />
