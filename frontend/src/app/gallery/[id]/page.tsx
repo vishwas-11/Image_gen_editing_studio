@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import type { ReactNode } from "react";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Download, FolderPlus, Heart, Loader2, Trash2 } from "lucide-react";
@@ -8,10 +9,10 @@ import { toast } from "sonner";
 import { AuthGuard, PageLoading, EmptyState } from "@/components/shared";
 import { Button } from "@/components/ui/button";
 import { AddToCollectionDialog } from "@/components/gallery";
-import { downloadBlob, formatRelative, parseTags } from "@/lib/utils";
+import { downloadBlob, formatBytes, formatRelative, parseTags } from "@/lib/utils";
 import { galleryApi, collectionsApi } from "@/lib/api/gallery";
 import { getErrorMessage } from "@/lib/api/client";
-import { ROUTES, OPERATIONS_LABELS } from "@/lib/constants";
+import { ROUTES, OPERATIONS_LABELS, PROVIDERS, STYLE_LABELS } from "@/lib/constants";
 import type { Collection, ImageRecord } from "@/types";
 
 export default function GalleryImagePage() {
@@ -128,6 +129,18 @@ function GalleryImageContent() {
 
   const tags = parseTags(image.tags);
   const operationLabel = image.operation ? OPERATIONS_LABELS[image.operation] ?? image.operation : null;
+  const styleLabel = image.style ? STYLE_LABELS[image.style] ?? image.style : null;
+  const providerLabel = image.provider
+    ? PROVIDERS[image.provider as keyof typeof PROVIDERS]?.label ?? image.provider
+    : null;
+  const resolution =
+    image.width && image.height
+      ? `${image.width} x ${image.height}`
+      : image.width
+        ? `${image.width}px wide`
+        : image.height
+          ? `${image.height}px tall`
+          : "--";
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-8">
@@ -161,7 +174,7 @@ function GalleryImageContent() {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(320px,0.7fr)]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.65fr)]">
         <div className="overflow-hidden rounded-2xl border border-studio-border bg-studio-surface shadow-2xl shadow-black/30">
           <div className="relative bg-black">
             <Image
@@ -183,24 +196,22 @@ function GalleryImageContent() {
             <p className="mt-1 font-mono text-xs text-studio-subtle">{formatRelative(image.created_at)}</p>
           </div>
 
-          {operationLabel && (
-            <div className="rounded-lg border border-studio-border bg-studio-surface px-3 py-2">
-              <div className="font-mono text-[11px] uppercase tracking-wider text-studio-subtle">Operation</div>
-              <div className="mt-1 text-sm text-white">{operationLabel}</div>
-            </div>
-          )}
+          <div className="grid grid-cols-2 gap-2">
+            <Pill label="Operation" value={operationLabel ?? "--"} />
+            <Pill label="Provider" value={providerLabel ?? "--"} />
+          </div>
 
-          {image.prompt && (
-            <div className="rounded-lg border border-studio-border bg-studio-surface px-3 py-2">
-              <div className="font-mono text-[11px] uppercase tracking-wider text-studio-subtle">Prompt</div>
-              <p className="mt-2 whitespace-pre-wrap font-mono text-sm leading-relaxed text-white/85">{image.prompt}</p>
-            </div>
-          )}
+          <SectionCard title="Prompt">
+            <DetailText value={image.prompt} placeholder="No prompt stored" />
+          </SectionCard>
+
+          <SectionCard title="Negative Prompt">
+            <DetailText value={image.negative_prompt} placeholder="No negative prompt stored" />
+          </SectionCard>
 
           {tags.length > 0 && (
-            <div className="rounded-lg border border-studio-border bg-studio-surface px-3 py-2">
-              <div className="font-mono text-[11px] uppercase tracking-wider text-studio-subtle">Tags</div>
-              <div className="mt-2 flex flex-wrap gap-2">
+            <SectionCard title="Tags">
+              <div className="flex flex-wrap gap-2">
                 {tags.map((tag) => (
                   <span
                     key={tag}
@@ -210,15 +221,17 @@ function GalleryImageContent() {
                   </span>
                 ))}
               </div>
-            </div>
+            </SectionCard>
           )}
 
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <InfoItem label="Style" value={image.style ?? "—"} />
-            <InfoItem label="Aspect Ratio" value={image.aspect_ratio ?? "—"} />
-            <InfoItem label="Quality" value={image.quality ?? "—"} />
-            <InfoItem label="Format" value={image.format ?? "—"} />
-            <InfoItem label="Size" value={image.file_size ? `${Math.round(image.file_size / 1024)} KB` : "—"} />
+            <InfoItem label="Resolution" value={resolution} />
+            <InfoItem label="Aspect Ratio" value={image.aspect_ratio ?? "--"} />
+            <InfoItem label="Style" value={styleLabel ?? "--"} />
+            <InfoItem label="Quality" value={image.quality ?? "--"} />
+            <InfoItem label="Seed" value={image.seed ?? "--"} />
+            <InfoItem label="Format" value={image.format ?? "--"} />
+            <InfoItem label="Size" value={image.file_size ? formatBytes(image.file_size) : "--"} />
             <InfoItem label="Favorite" value={image.is_favorite ? "Yes" : "No"} />
           </div>
         </div>
@@ -232,6 +245,32 @@ function GalleryImageContent() {
         onAdded={fetchCollections}
       />
     </div>
+  );
+}
+
+function Pill({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-studio-border bg-studio-surface px-3 py-2">
+      <div className="font-mono text-[10px] uppercase tracking-wider text-studio-subtle">{label}</div>
+      <div className="mt-1 font-mono text-xs text-white">{value}</div>
+    </div>
+  );
+}
+
+function SectionCard({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="rounded-xl border border-studio-border bg-studio-surface px-3 py-2">
+      <div className="font-mono text-[11px] uppercase tracking-wider text-studio-subtle">{title}</div>
+      <div className="mt-2">{children}</div>
+    </div>
+  );
+}
+
+function DetailText({ value, placeholder }: { value: string | null; placeholder: string }) {
+  return value ? (
+    <p className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-white/85">{value}</p>
+  ) : (
+    <p className="font-mono text-sm leading-relaxed text-white/45">{placeholder}</p>
   );
 }
 

@@ -131,8 +131,6 @@ async def generate_images(
 
     await _record_prompt_history(db, current_user.id, payload.prompt)
 
-    elapsed = round(time.time() - start, 2)
-
     return GenerationResponse(
         images=[GeneratedImageOut.model_validate(img) for img in saved],
         prompt_used=payload.prompt,
