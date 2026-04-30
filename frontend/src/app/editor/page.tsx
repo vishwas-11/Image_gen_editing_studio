@@ -21,6 +21,7 @@ import { EditorToolbar } from "@/components/editor/EditorToolbar";
 import { BrushSettings } from "@/components/editor/BrushSettings";
 import { InpaintPanel } from "@/components/editor/InpaintPanel";
 import { OutpaintControls } from "@/components/editor/OutpaintControls";
+import { ImageToImagePanel } from "@/components/editor/ImageToImagePanel";
 import { BeforeAfterSlider } from "@/components/editor/BeforeAfterSlider";
 import { useEditorStore } from "@/store/galleryStore";
 import { editApi } from "@/lib/api/edit";
@@ -48,7 +49,8 @@ function EditorContent() {
   const [loadingMsg, setLoadingMsg] = useState("Processing...");
   const [hasMask, setHasMask] = useState(false);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"inpaint" | "outpaint">("inpaint");
+  const [previewBeforeUrl, setPreviewBeforeUrl] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"inpaint" | "outpaint" | "img2img">("inpaint");
   const [replaceImageOpen, setReplaceImageOpen] = useState(false);
 
   useEffect(() => {
@@ -78,8 +80,9 @@ function EditorContent() {
       setLoadingMsg("Uploading image...");
       try {
         const res = await uploadApi.uploadFile(file);
-        store.setSourceImage(res.image_url);
+        store.setSourceImage(res.image_url, res.cloudinary_public_id);
         setResultUrl(null);
+        setPreviewBeforeUrl(null);
         setHasMask(false);
         toast.success("Image loaded into canvas");
       } catch (err) {
@@ -95,8 +98,29 @@ function EditorContent() {
     (imageUrl: string, imageId: string) => {
       store.setSourceImage(imageUrl, imageId);
       setResultUrl(null);
+      setPreviewBeforeUrl(null);
       setHasMask(false);
       toast.success("Image loaded from gallery");
+    },
+    [store],
+  );
+
+  const handleImg2ImgUpload = useCallback(
+    async (file: File) => {
+      setLoading(true);
+      setLoadingMsg("Uploading reference image...");
+      try {
+        const res = await uploadApi.uploadFile(file);
+        store.setSourceImage(res.image_url, res.cloudinary_public_id);
+        setResultUrl(null);
+        setPreviewBeforeUrl(null);
+        setHasMask(false);
+        toast.success("Reference image loaded");
+      } catch (err) {
+        toast.error(getErrorMessage(err));
+      } finally {
+        setLoading(false);
+      }
     },
     [store],
   );
@@ -105,6 +129,7 @@ function EditorContent() {
     canvasRef.current?.clearMask();
     store.clearSourceImage();
     setResultUrl(null);
+    setPreviewBeforeUrl(null);
     setHasMask(false);
     setReplaceImageOpen(false);
     toast.success("Current image removed");
@@ -112,8 +137,9 @@ function EditorContent() {
 
   const handleInpaint = useCallback(
     async (prompt: string, style: StylePreset) => {
+      const sourceImageUrl = store.sourceImageUrl;
       const maskDataURL = canvasRef.current?.getMaskDataURL();
-      if (!maskDataURL || !store.sourceImageUrl) {
+      if (!maskDataURL || !sourceImageUrl) {
         toast.error("Paint a mask on the image first");
         return;
       }
@@ -123,8 +149,9 @@ function EditorContent() {
       try {
         const maskUpload = await uploadApi.uploadMaskBase64(maskDataURL);
         setLoadingMsg("Inpainting with AI...");
+        setPreviewBeforeUrl(sourceImageUrl);
         const res = await editApi.inpaint({
-          original_image_url: store.sourceImageUrl,
+          original_image_url: sourceImageUrl,
           mask_image_url: maskUpload.image_url,
           prompt,
           style,
@@ -144,13 +171,15 @@ function EditorContent() {
   );
 
   const handleRemoveBg = useCallback(async () => {
-    if (!store.sourceImageUrl) return;
+    const sourceImageUrl = store.sourceImageUrl;
+    if (!sourceImageUrl) return;
 
     setLoading(true);
     setLoadingMsg("Removing background...");
     try {
+      setPreviewBeforeUrl(sourceImageUrl);
       const res = await editApi.removeBg({
-        image_url: store.sourceImageUrl,
+        image_url: sourceImageUrl,
         replacement_type: "transparent",
       });
       setResultUrl(res.images[0]?.image_url ?? null);
@@ -165,13 +194,15 @@ function EditorContent() {
 
   const handleStyleTransfer = useCallback(
     async (style: StylePreset) => {
-      if (!store.sourceImageUrl) return;
+      const sourceImageUrl = store.sourceImageUrl;
+      if (!sourceImageUrl) return;
 
       setLoading(true);
       setLoadingMsg("Applying style transfer...");
       try {
+        setPreviewBeforeUrl(sourceImageUrl);
         const res = await editApi.styleTransfer({
-          source_image_url: store.sourceImageUrl,
+          source_image_url: sourceImageUrl,
           style,
         });
         setResultUrl(res.images[0]?.image_url ?? null);
@@ -186,15 +217,61 @@ function EditorContent() {
     [store],
   );
 
+  const handleImg2Img = useCallback(
+    async ({
+      prompt,
+      negativePrompt,
+      style,
+      strength,
+    }: {
+      prompt: string;
+      negativePrompt?: string;
+      style: StylePreset;
+      strength: number;
+    }) => {
+      const sourceImageUrl = store.sourceImageUrl;
+      if (!sourceImageUrl || !prompt.trim()) {
+        toast.error("Load a reference image and add a prompt first");
+        return;
+      }
+
+      setLoading(true);
+      setLoadingMsg("Running image-to-image...");
+      try {
+        setPreviewBeforeUrl(sourceImageUrl);
+        const res = await editApi.img2img({
+          source_image_url: sourceImageUrl,
+          prompt,
+          negative_prompt: negativePrompt,
+          style,
+          strength,
+        });
+        setResultUrl(res.images[0]?.image_url ?? null);
+        if (res.images[0]?.image_url) {
+          store.setSourceImage(res.images[0].image_url);
+        }
+        setHasMask(false);
+        toast.success("Image-to-image complete!");
+      } catch (err) {
+        toast.error(getErrorMessage(err));
+      } finally {
+        setLoading(false);
+      }
+    },
+    [store],
+  );
+
   const handleOutpaint = useCallback(
     async (directions: string[], pixels: number, prompt?: string) => {
-      if (!store.sourceImageUrl) return;
+      const sourceImageUrl = store.sourceImageUrl;
+      if (!sourceImageUrl) return;
 
       setLoading(true);
       setLoadingMsg("Generating outpaint...");
       try {
+        setPreviewBeforeUrl(sourceImageUrl);
         const res = await editApi.outpaint({
-          original_image_url: store.sourceImageUrl,
+          original_image_url: sourceImageUrl,
           directions: directions as any,
           pixels,
           prompt,
@@ -227,6 +304,7 @@ function EditorContent() {
               <h2 className="font-display text-lg text-white">Upload new image</h2>
               <p className="mt-1 font-mono text-[11px] text-studio-subtle">
                 Use a file from your device when it is not already in the gallery.
+                It will also become the reference image for image-to-image.
               </p>
             </div>
             <ImageDropzone
@@ -241,7 +319,7 @@ function EditorContent() {
               <div>
                 <h2 className="font-display text-lg text-white">Select from gallery</h2>
                 <p className="mt-1 font-mono text-[11px] text-studio-subtle">
-                  Pick a recent image to open it directly in the editor.
+                  Pick a recent image to open it directly in the editor and use it as an img2img reference.
                 </p>
               </div>
               <Button
@@ -353,7 +431,7 @@ function EditorContent() {
               </p>
               <div className="mx-auto max-w-lg">
                 <BeforeAfterSlider
-                  beforeUrl={store.sourceImageUrl}
+                  beforeUrl={previewBeforeUrl ?? store.sourceImageUrl}
                   afterUrl={resultUrl}
                 />
               </div>
@@ -363,8 +441,8 @@ function EditorContent() {
 
         <aside className="flex w-64 flex-shrink-0 min-h-0 flex-col border-l border-studio-border">
           <div className="sticky top-0 z-20 border-b border-studio-border bg-black/95 backdrop-blur-sm">
-            <div className="grid grid-cols-2 gap-1 p-2">
-              {(["inpaint", "outpaint"] as const).map((tab) => (
+            <div className="grid grid-cols-3 gap-1 p-2">
+              {(["inpaint", "outpaint", "img2img"] as const).map((tab) => (
                 <button
                   key={tab}
                   type="button"
@@ -390,10 +468,16 @@ function EditorContent() {
                 onRemoveBg={handleRemoveBg}
                 onStyleTransfer={handleStyleTransfer}
               />
-            ) : (
+            ) : activeTab === "outpaint" ? (
               <OutpaintControls
                 isLoading={loading}
                 onOutpaint={handleOutpaint}
+              />
+            ) : (
+              <ImageToImagePanel
+                isLoading={loading}
+                onUploadReference={handleImg2ImgUpload}
+                onRun={handleImg2Img}
               />
             )}
           </div>
