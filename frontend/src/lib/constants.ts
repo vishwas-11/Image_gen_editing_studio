@@ -1,7 +1,13 @@
 import type { StyleDefinition, AspectRatioDef } from "@/types";
 
 export const STYLE_PRESETS: StyleDefinition[] = [
-  { id: "none",          label: "No Style",       emoji: "✦",  color: "#333",    prompt_suffix: "" },
+  {
+    id: "none",
+    label: "No Style",
+    emoji: "✦",
+    color: "#333",
+    prompt_suffix: "simple, minimal, uncluttered, plain background, neutral composition, no ornate details, no dramatic lighting, no cinematic effects, no stylization",
+  },
   { id: "photorealistic",label: "Photorealistic",  emoji: "📷", color: "#1a6b3a", prompt_suffix: "photorealistic, ultra detailed, 8k, professional photography" },
   { id: "digital_art",   label: "Digital Art",     emoji: "🎨", color: "#2d1b69", prompt_suffix: "digital art, concept art, artstation, highly detailed" },
   { id: "oil_painting",  label: "Oil Painting",    emoji: "🖼️", color: "#7c3a1e", prompt_suffix: "oil painting, classical, textured brushstrokes, masterpiece" },

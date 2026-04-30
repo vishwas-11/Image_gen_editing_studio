@@ -16,9 +16,9 @@ type StyleMeta = {
 
 const STYLE_META: Record<StylePreset, StyleMeta> = {
   none: {
-    tagline: "Clean baseline output",
-    chips: ["neutral", "flexible", "unlocked"],
-    detail: "Start blank and keep the model undecorated.",
+    tagline: "Plain minimal output",
+    chips: ["simple", "neutral", "uncluttered"],
+    detail: "Keep the model plain, minimal, and free of decorative styling.",
   },
   photorealistic: {
     tagline: "Lens-driven realism",

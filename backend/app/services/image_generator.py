@@ -24,6 +24,11 @@ from app.models.schemas import (
 from app.services.storage import upload_image_bytes, upload_image_from_url
 
 # Style prompt injections
+BASELINE_STYLE_PROMPT = (
+    "simple, minimal, uncluttered, plain background, neutral composition, "
+    "no ornate details, no dramatic lighting, no cinematic effects, no stylization"
+)
+
 STYLE_PROMPTS: dict[str, str] = {
     "photorealistic": "photorealistic, ultra detailed, 8k, professional photography, sharp focus",
     "digital_art": "digital art, concept art, artstation, trending, highly detailed",
@@ -40,7 +45,7 @@ STYLE_PROMPTS: dict[str, str] = {
     "art_nouveau": "art nouveau, ornate, flowing lines, natural forms, decorative, Mucha style",
     "cyberpunk": "cyberpunk, neon lights, futuristic dystopia, rain-soaked streets, synthwave",
     "fantasy": "fantasy art, magical, ethereal, detailed illustration, epic, D&D inspired",
-    "none": "",
+    "none": BASELINE_STYLE_PROMPT,
 }
 
 QUALITY_MAP: dict[str, str] = {
@@ -74,8 +79,8 @@ def _build_style_transfer_prompt(style: StylePreset, prompt: Optional[str] = Non
     )
     style_instruction = (
         f"Apply this visual style: {style_suffix}."
-        if style_suffix
-        else "Apply a coherent artistic style."
+        if style_suffix and style != "none"
+        else "Keep the result simple, minimal, and neutral."
     )
     return (
         f"{base_prompt} Do not add, remove, or replace objects. "

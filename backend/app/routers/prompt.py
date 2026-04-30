@@ -46,7 +46,7 @@ async def enhance(
     return PromptEnhanceResponse(
         original=payload.prompt,
         enhanced=enhanced,
-        style_applied=payload.style,
+        style_applied=None if not payload.style or payload.style == "none" else payload.style,
     )
 
 
