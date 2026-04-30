@@ -1,6 +1,6 @@
 "use client";
 
-import { Sparkles } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import type { ImageRecord } from "@/types";
@@ -44,9 +44,11 @@ export function GenerationGrid({
     );
   }
 
+  const hasResults = images.length > 0;
+
   return (
-    <div className="flex flex-col gap-3">
-      {generationTime && (
+    <div className="relative flex flex-col gap-3">
+      {generationTime && !isGenerating && (
         <div className="flex items-center gap-2">
           <div className="h-px flex-1 bg-studio-border" />
           <span className="font-mono text-[10px] text-studio-subtle">
@@ -57,16 +59,45 @@ export function GenerationGrid({
         </div>
       )}
 
-      <div className="relative">
-        {isGenerating && (
-          <div className={cn("grid gap-3", gridClassName)}>
-            {Array.from({ length: batch }).map((_, index) => (
-              <div key={index} className="skeleton aspect-square rounded-lg" />
-            ))}
-          </div>
-        )}
+      {isGenerating && hasResults && (
+        <div
+          className={cn(
+            "absolute inset-x-0 top-0 z-10 flex justify-center px-3",
+            "pt-3",
+          )}
+        >
+          <div
+            role="status"
+            aria-live="polite"
+            aria-busy="true"
+            className="w-full max-w-xl rounded-xl border border-studio-border bg-black/85 px-4 py-3 shadow-[0_12px_40px_rgba(0,0,0,0.45)] backdrop-blur-md"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-studio-border bg-studio-surface">
+                <Loader2 size={18} className="animate-spin text-studio-blue" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-display text-sm text-white">
+                  Generating images...
+                </p>
+                <p className="mt-0.5 font-mono text-[10px] text-studio-subtle">
+                  Rendering {batch} image{batch !== 1 ? "s" : ""}. Please keep this tab open.
+                </p>
+              </div>
+              <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-studio-subtle">
+                Working
+              </span>
+            </div>
 
-        {!isGenerating && images.length > 0 && (
+            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/8">
+              <div className="loading-indeterminate-bar h-full w-1/3 rounded-full bg-gradient-to-r from-transparent via-studio-blue to-transparent" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className={cn("relative", isGenerating && hasResults && "opacity-40 blur-[1px] pointer-events-none")}>
+        {images.length > 0 ? (
           <div className={cn("grid gap-3", gridClassName)}>
             {images.map((image) => (
               <ImageResultCard
@@ -77,7 +108,19 @@ export function GenerationGrid({
               />
             ))}
           </div>
-        )}
+        ) : isGenerating ? (
+          <div className="flex h-64 flex-col items-center justify-center rounded-xl border border-studio-border bg-studio-surface/20">
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl border border-studio-border bg-studio-surface">
+              <Loader2 size={22} className="animate-spin text-studio-blue" />
+            </div>
+            <p className="font-display text-sm text-white">
+              Generating your images
+            </p>
+            <p className="mt-1.5 font-mono text-xs text-studio-subtle">
+              This can take a few moments depending on the prompt and batch size.
+            </p>
+          </div>
+        ) : null}
       </div>
     </div>
   );
