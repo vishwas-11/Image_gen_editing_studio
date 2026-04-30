@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef } from "react";
-import { Sparkles, Dices, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { Sparkles, Dices, ChevronDown, ChevronUp } from "lucide-react";
 import { Textarea, Label } from "@/components/ui/index";
 import { Button } from "@/components/ui/button";
 import { promptApi } from "@/lib/api/gallery";
@@ -109,29 +109,49 @@ export default function PromptInput({
         <button
           type="button"
           aria-expanded={showNegative}
+          aria-controls="negative-prompt"
           onClick={onToggleNegative}
-          className="studio-chip flex items-center gap-1 rounded-md px-2 py-1 font-mono text-xs text-studio-subtle hover:text-white"
+          className={cn(
+            "studio-chip inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 font-mono text-xs transition-colors",
+            showNegative
+              ? "border border-studio-blue/30 bg-studio-blue/10 text-white"
+              : "border border-studio-border bg-studio-surface text-studio-subtle hover:text-white",
+          )}
         >
           {showNegative ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-          Negative
+          {showNegative ? "Hide negative" : "Show negative"}
         </button>
       </div>
 
       {/* Negative prompt — collapsible */}
       {showNegative && (
-        <div className="flex flex-col gap-1.5 animate-slide-down">
-          <Label htmlFor="negative">Negative Prompt</Label>
+        <div
+          id="negative-prompt"
+          className="rounded-xl border border-studio-border bg-studio-surface/40 p-3 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] animate-slide-down"
+        >
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <Label htmlFor="negative" className="flex items-center gap-2">
+              <span>Negative Prompt</span>
+              <span className="rounded-full border border-studio-border bg-black/70 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-studio-subtle">
+                Optional
+              </span>
+            </Label>
+            <span className="font-mono text-[10px] text-studio-subtle/60">
+              Tell the model what to avoid
+            </span>
+          </div>
           <Textarea
             id="negative"
             value={negativePrompt}
             onChange={(e) => onNegativeChange(e.target.value)}
-            placeholder="blurry, low quality, watermark, text, distorted..."
+            placeholder="blurry, low quality, watermark, text, distorted, extra fingers..."
             maxLength={MAX_NEGATIVE_PROMPT_LENGTH}
-            rows={2}
-            className="text-xs"
+            rows={3}
+            className="text-sm"
           />
-          <p className="font-mono text-[10px] text-studio-subtle/60">
-            Describe what to exclude from the image
+          <p className="mt-2 flex items-center gap-2 font-mono text-[10px] text-studio-subtle/65">
+            <Sparkles size={11} className="text-studio-blue/80" />
+            Use this to block unwanted details, artifacts, or styles before generating.
           </p>
         </div>
       )}
