@@ -113,6 +113,7 @@ async def generate_images(
             detail=f"AI provider error: {str(e)}",
         )
 
+    elapsed = round(time.time() - start, 2)
     saved: list[ImageModel] = []
     for res in upload_results:
         img = await _save_image_to_db(
@@ -125,7 +126,7 @@ async def generate_images(
             aspect_ratio=payload.aspect_ratio,
             quality=payload.quality,
             operation="generate",
-            seed=res.get("seed"),
+            seed=str(payload.seed) if payload.seed is not None else res.get("seed"),
         )
         saved.append(img)
 
