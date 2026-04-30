@@ -1,35 +1,55 @@
 "use client";
 
-import { Eraser, Paintbrush } from "lucide-react";
+import { Eraser, Hand, Lasso, Paintbrush, RectangleHorizontal } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Slider, Label } from "@/components/ui/index";
 import { useEditorStore } from "@/store/galleryStore";
-import type { BrushTool } from "@/types";
+import type { EditorTool } from "@/types";
 
 export function BrushSettings() {
-  const { brushSize, brushTool, softEdge, setBrushSize, setBrushTool, setSoftEdge } = useEditorStore();
+  const {
+    brushSize,
+    editorTool,
+    brushOpacity,
+    softEdge,
+    setBrushSize,
+    setBrushTool,
+    setEditorTool,
+    setBrushOpacity,
+    setSoftEdge,
+  } = useEditorStore();
+
+  const handleToolChange = (tool: EditorTool) => {
+    setEditorTool(tool);
+    if (tool === "brush" || tool === "eraser") {
+      setBrushTool(tool);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-5 p-4">
-      <span className="font-mono text-xs uppercase tracking-wider text-studio-subtle">Brush</span>
+      <span className="font-mono text-xs uppercase tracking-wider text-studio-subtle">Editor tools</span>
 
       <div className="flex flex-col gap-2">
-        <Label>Tool</Label>
-        <div className="flex gap-1.5">
+        <Label>Mask tool</Label>
+        <div className="grid grid-cols-2 gap-1.5">
           {(
             [
               { tool: "brush", icon: Paintbrush, label: "Paint" },
               { tool: "eraser", icon: Eraser, label: "Erase" },
+              { tool: "rectangle", icon: RectangleHorizontal, label: "Rect" },
+              { tool: "lasso", icon: Lasso, label: "Lasso" },
+              { tool: "pan", icon: Hand, label: "Pan" },
             ] as const
           ).map(({ tool, icon: Icon, label }) => (
             <button
               key={tool}
-              onClick={() => setBrushTool(tool as BrushTool)}
+              onClick={() => handleToolChange(tool as EditorTool)}
               className={cn(
-                "flex-1 rounded-lg border py-2 font-mono text-xs transition-all",
+                "rounded-lg border px-2 py-2 font-mono text-xs transition-all",
                 "flex items-center justify-center gap-1.5",
-                brushTool === tool
+                editorTool === tool
                   ? "border-studio-blue bg-studio-blue/10 text-white"
                   : "border-studio-border bg-studio-surface text-studio-subtle hover:text-white"
               )}
@@ -64,6 +84,23 @@ export function BrushSettings() {
         </div>
       </div>
 
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <Label>Opacity</Label>
+          <span className="font-mono text-xs text-studio-blue">{Math.round(brushOpacity * 100)}%</span>
+        </div>
+        <Slider
+          min={0.15}
+          max={1}
+          step={0.05}
+          value={[brushOpacity]}
+          onValueChange={([value]) => setBrushOpacity(value)}
+        />
+        <p className="font-mono text-[10px] leading-relaxed text-studio-subtle">
+          Applies to paint, erase, rectangle, and lasso masks so the exported mask matches what you see.
+        </p>
+      </div>
+
       <div className="flex items-center justify-between">
         <Label>Soft Edge</Label>
         <button
@@ -86,6 +123,8 @@ export function BrushSettings() {
         <p className="font-mono text-[10px] leading-relaxed text-studio-subtle">
           <span className="text-red-400">Paint</span> the area you want to regenerate.
           Switch to <span className="text-blue-400">Erase</span> to trim the selection or clean up edges.
+          Use <span className="text-white">Rect</span> or <span className="text-white">Lasso</span> for selection-style masks,
+          and <span className="text-white">Pan</span> to drag the canvas around.
         </p>
       </div>
     </div>

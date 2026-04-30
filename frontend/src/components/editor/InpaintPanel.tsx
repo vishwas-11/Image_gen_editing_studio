@@ -34,6 +34,7 @@ export function InpaintPanel({
 }: InpaintPanelProps) {
   const { inpaintPrompt, setInpaintPrompt } = useEditorStore();
   const [style, setStyle] = useState<StylePreset>("none");
+  const [styleTransfer, setStyleTransfer] = useState<StylePreset | "">("");
 
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -46,20 +47,25 @@ export function InpaintPanel({
 
       <div className="flex flex-col gap-1.5">
         <Label>Style</Label>
-        <select
-          value={style}
-          onChange={(e) => setStyle(e.target.value as StylePreset)}
-          className={cn(
-            "w-full rounded border border-studio-border bg-studio-surface px-2.5 py-2",
-            "font-mono text-xs text-white focus:outline-none focus:ring-1 focus:ring-studio-blue"
-          )}
-        >
-          {STYLE_PRESETS.map((preset) => (
-            <option key={preset.id} value={preset.id}>
-              {preset.label}
-            </option>
-          ))}
-        </select>
+        <Select value={style} onValueChange={(value) => setStyle(value as StylePreset)}>
+          <SelectTrigger className={cn(
+            "w-full border-studio-border bg-studio-surface px-3 py-2",
+            "font-mono text-xs text-white hover:border-studio-blue/50"
+          )}>
+            <SelectValue placeholder="No Style" />
+          </SelectTrigger>
+          <SelectContent className="z-[100] border-studio-border bg-black text-white">
+            {STYLE_PRESETS.map((preset) => (
+              <SelectItem
+                key={preset.id}
+                value={preset.id}
+                className="font-mono text-xs focus:bg-studio-blue focus:text-white"
+              >
+                {preset.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="flex flex-col gap-2">
@@ -112,11 +118,18 @@ export function InpaintPanel({
         <span className="font-mono text-xs uppercase tracking-wider text-studio-subtle">
           Style Transfer
         </span>
-        <Select onValueChange={(value) => onStyleTransfer(value as StylePreset)}>
+        <Select
+          value={styleTransfer}
+          onValueChange={(value) => {
+            const next = value as StylePreset;
+            setStyleTransfer(next);
+            onStyleTransfer(next);
+          }}
+        >
           <SelectTrigger className="w-full border-studio-border bg-studio-surface px-3 py-2 font-mono text-xs text-white hover:border-studio-blue/50">
             <SelectValue placeholder="Select style to apply..." />
           </SelectTrigger>
-          <SelectContent className="border-studio-border bg-black text-white">
+          <SelectContent className="z-[100] border-studio-border bg-black text-white">
             {STYLE_PRESETS.filter((preset) => preset.id !== "none").map((preset) => (
               <SelectItem
                 key={preset.id}

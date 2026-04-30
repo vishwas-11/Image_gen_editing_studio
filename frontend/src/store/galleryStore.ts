@@ -1,6 +1,6 @@
 "use client";
 import { create } from "zustand";
-import type { ImageRecord, GalleryFilters, Collection, BrushTool, StylePreset } from "@/types";
+import type { ImageRecord, GalleryFilters, Collection, BrushTool, EditorTool, StylePreset } from "@/types";
 
 // ─── Gallery Store ─────────────────────────────────────────────────────────
 
@@ -85,6 +85,8 @@ interface EditorStoreState {
   maskImageUrl: string | null;
   brushSize: number;
   brushTool: BrushTool;
+  editorTool: EditorTool;
+  brushOpacity: number;
   softEdge: boolean;
   zoom: number;
   canUndo: boolean;
@@ -101,6 +103,8 @@ interface EditorStoreState {
   setMaskImageUrl: (url: string | null) => void;
   setBrushSize: (n: number) => void;
   setBrushTool: (t: BrushTool) => void;
+  setEditorTool: (t: EditorTool) => void;
+  setBrushOpacity: (n: number) => void;
   setSoftEdge: (v: boolean) => void;
   setZoom: (n: number) => void;
   setCanUndo: (v: boolean) => void;
@@ -122,6 +126,8 @@ export const useEditorStore = create<EditorStoreState>()((set, get) => ({
   maskImageUrl:      null,
   brushSize:         30,
   brushTool:         "brush",
+  editorTool:        "brush",
+  brushOpacity:      0.85,
   softEdge:          true,
   zoom:              1,
   canUndo:           false,
@@ -138,6 +144,8 @@ export const useEditorStore = create<EditorStoreState>()((set, get) => ({
   setMaskImageUrl:   (url)     => set({ maskImageUrl: url }),
   setBrushSize:      (n)       => set({ brushSize: n }),
   setBrushTool:      (t)       => set({ brushTool: t }),
+  setEditorTool:     (t)       => set({ editorTool: t }),
+  setBrushOpacity:   (n)       => set({ brushOpacity: n }),
   setSoftEdge:       (v)       => set({ softEdge: v }),
   setZoom:           (n)       => set({ zoom: n }),
   setCanUndo:        (v)       => set({ canUndo: v }),
@@ -162,6 +170,8 @@ export const useEditorStore = create<EditorStoreState>()((set, get) => ({
       img2imgStrength: 0.75,
       img2imgStyle: "none",
       outpaintDirections: [],
+      editorTool: "brush",
+      brushOpacity: 0.85,
       zoom: 1,
     }),
 
@@ -178,6 +188,8 @@ export const useEditorStore = create<EditorStoreState>()((set, get) => ({
     maskImageUrl: null,
     brushSize: 30,
     brushTool: "brush",
+    editorTool: "brush",
+    brushOpacity: 0.85,
     softEdge: true,
     zoom: 1,
     canUndo: false,

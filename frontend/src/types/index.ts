@@ -201,12 +201,15 @@ export interface AspectRatioDef {
 }
 
 export type BrushTool = "brush" | "eraser";
+export type EditorTool = "brush" | "eraser" | "rectangle" | "lasso" | "pan";
 
 export interface EditorState {
   sourceImageUrl: string | null;
   maskImageUrl: string | null;
   brushSize: number;
   brushTool: BrushTool;
+  editorTool: EditorTool;
+  brushOpacity: number;
   softEdge: boolean;
   zoom: number;
   canUndo: boolean;
